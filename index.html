@@ -852,8 +852,9 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const SUPABASE_URL = 'https://ngfmnxhzwgpasygmktla.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nZm1ueGh6d2dwYXN5Z21rdGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA5NjkzODAsImV4cCI6MjA2NjU0NTM4MH0.iY3Qu-DcMXL_IPq2iNb79UkotjThFTqwBfPJtAgSEzY';
+            // NOVAS CREDENCIAIS AQUI!
+            const SUPABASE_URL = 'https://pbgnhcwspgvqcwlbbxle.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZ25oY3dzcGd2cWN3bGJieGxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNTQwNjksImV4cCI6MjA2NjkzMDA2OX0.9wOVZGObGwmL5T1qLkxOA2Ktm9TmW-zBPQnyn94vYSo';
             const { createClient } = supabase;
             const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             let currentUser = null;
@@ -967,9 +968,10 @@
             const historicoTableBody = document.getElementById('historicoTableBody');
 
 
-            // <<< IMPORTANTE: SUBSTITUA matheus@holysalt.com PELO SEU EMAIL DE ADMINISTRADOR MASTER REAL >>>
+            // SEU NOVO ID DE ADMIN AQUI!
             const ADMIN_MASTER_EMAIL = 'matheus@holysalt.com'; 
-            
+            const ADMIN_USER_ID = 'a37a896b-0b5a-4b87-b8be-3358249a84ee'; // NOVO ID DO SEU ADMINISTRADOR
+
             // --- CORE FUNCTIONS ---
             function showScreen(screenId) {
                 Object.values(screens).forEach(screen => {
@@ -1003,16 +1005,16 @@
 
                 userMainPanel.style.display = 'block'; 
                 
-                if (user.email === ADMIN_MASTER_EMAIL) { 
+                if (user.id === ADMIN_USER_ID) { // Usa o ID do ADMIN para verificar
                     btnGoToCriarLogin.style.display = 'flex'; 
                     btnGoToListarLogins.style.display = 'flex';
-                    btnGoToGerenciarDiarias.style.display = 'flex'; // Mostra botão para Admin
-                    btnGoToHistorico.style.display = 'flex'; // Mostra botão para Admin
+                    btnGoToGerenciarDiarias.style.display = 'flex'; 
+                    btnGoToHistorico.style.display = 'flex'; 
                 } else {
                     btnGoToCriarLogin.style.display = 'none';
                     btnGoToListarLogins.style.display = 'none';
-                    btnGoToGerenciarDiarias.style.display = 'none'; // Esconde para outros usuários
-                    btnGoToHistorico.style.display = 'none'; // Esconde para outros usuários
+                    btnGoToGerenciarDiarias.style.display = 'none'; 
+                    btnGoToHistorico.style.display = 'none'; 
                 }
                 btnGoToAlterarSenha.style.display = 'flex'; 
 
@@ -1216,7 +1218,7 @@
                 
                 const currentDiariaFuncaoInput = isEditContext ? editDiariaFuncaoSelect : diariaFuncaoInput;
                 const currentDiariaSetorInput = isEditContext ? editDiariaSetorSelect : diariaSetorInput;
-                // CORREÇÃO AQUI: Agora editDiariaCamposDinamicos já é o elemento que queremos controlar o display
+                // CORREÇÃO AQUI: editDiariaCamposDinamicos agora é o ID do div que agrupa os campos de hora no modal
                 const currentDiariaCamposDinamicos = isEditContext ? editDiariaCamposDinamicos : diariaCamposDinamicos;
                 const currentDiariaHorasContainer = isEditContext ? editDiariaHorasContainer : diariaHorasContainer;
                 const currentDiariaDobrouCheckbox = isEditContext ? editDiariaDobrouCheckbox : diariaDobrouCheckbox;
@@ -1321,7 +1323,8 @@
                     horario_saida: horaSaida,
                     funcao_colaborador: colaborador.funcao, 
                     setor_colaborador: colaborador.setor
-                    // Não inclua o ID aqui, ele é auto-gerado pelo BD
+                    // Não inclua o ID aqui, ele é auto-gerado pelo BD.
+                    // O trigger handle_diaria_create cuidará do user_id e do histórico.
                 };
                 
                 const { error } = await _supabase.from('diarias_lancadas').insert([lancamento]);
