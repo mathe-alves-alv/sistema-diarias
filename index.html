@@ -634,13 +634,10 @@
                         <thead>
                             <tr>
                                 <th>Email</th>
-                                <th>ID do Usuário</th>
-                                <th>Status</th>
-                                <th>Criado Em</th>
                             </tr>
                         </thead>
                         <tbody id="usersTableBody">
-                            <tr><td colspan="4" style="text-align: center; padding: 20px;">Carregando usuários...</td></tr>
+                            <tr><td colspan="1" style="text-align: center; padding: 20px;">Carregando usuários...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1224,10 +1221,9 @@
                 // --- Geração do PDF ---
                 const doc = new jsPDF();
                 const defaultMargin = 15; 
-                // A posição X do texto da célula é: margem da tabela + cellPadding.
-                // Ajuste este offset para alinhar o título da seção com o texto da primeira coluna da tabela.
-                // O cellPadding padrão é 3. Vamos usar isso como base.
-                const sectionTitleX = defaultMargin + 3; // 15 + 3 = 18
+                
+                // Posição X para os títulos das seções (alinha com a margem esquerda da tabela)
+                const sectionTitleX = defaultMargin; 
 
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(22);
@@ -1256,7 +1252,6 @@
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(16);
                 doc.setTextColor(52, 58, 64);
-                // Usar a nova coordenada X ajustada para o título da seção
                 doc.text("Pagamentos por Colaborador", sectionTitleX, yPos); 
                 yPos += 10;
                 doc.autoTable({
@@ -1276,15 +1271,21 @@
                         textColor: 255, 
                         fontStyle: 'bold',
                         fontSize: 11,
-                        halign: 'center' 
+                        // Remover halign: 'center' aqui para usar o didParseCell ou columnStyles
                     },
                     bodyStyles: { textColor: [33, 37, 41] },
                     alternateRowStyles: { fillColor: [248, 249, 250] },
                     margin: { horizontal: defaultMargin }, 
                     columnStyles: {
-                        0: { halign: 'left' },
-                        1: { halign: 'left' },
-                        2: { halign: 'right' } 
+                        0: { halign: 'left' }, // 'Nome Completo' alinhado à esquerda
+                        1: { halign: 'left' }, // 'Chave PIX' alinhado à esquerda
+                        2: { halign: 'right' } // 'Valor Total' alinhado à direita
+                    },
+                    didParseCell: function(data) {
+                        // Força o alinhamento à esquerda para o cabeçalho da primeira coluna
+                        if (data.section === 'head' && data.column.index === 0) {
+                            data.cell.styles.halign = 'left';
+                        }
                     },
                     didDrawPage: function (data) {
                         let str = "Página " + doc.internal.getNumberOfPages();
@@ -1299,7 +1300,6 @@
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(16);
                 doc.setTextColor(52, 58, 64);
-                // Usar a nova coordenada X ajustada para o título da seção
                 doc.text("Gastos por Setor", sectionTitleX, yPos); 
                 yPos += 10;
                 doc.autoTable({
@@ -1319,14 +1319,14 @@
                         textColor: 255, 
                         fontStyle: 'bold',
                         fontSize: 11,
-                        halign: 'center' 
+                        // Remover halign: 'center' aqui para usar o didParseCell ou columnStyles
                     },
                     bodyStyles: { textColor: [33, 37, 41] },
                     alternateRowStyles: { fillColor: [248, 249, 250] },
                     margin: { horizontal: defaultMargin }, 
                     columnStyles: {
-                        0: { halign: 'left' },
-                        1: { halign: 'right' } 
+                        0: { halign: 'left' }, // 'Setor' alinhado à esquerda
+                        1: { halign: 'right' } // 'Valor Total' alinhado à direita
                     },
                     foot: [['TOTAL GERAL', `R$ ${totalGeral.toFixed(2)}`]], 
                     footStyles: {
@@ -1338,6 +1338,10 @@
                         cellPadding: 4 
                     },
                     didParseCell: function(data) {
+                        // Força o alinhamento à esquerda para o cabeçalho da primeira coluna
+                        if (data.section === 'head' && data.column.index === 0) {
+                            data.cell.styles.halign = 'left';
+                        }
                         if (data.section === 'foot' && data.column.index === 0) {
                             data.cell.styles.halign = 'left';
                         }
@@ -1456,9 +1460,9 @@
                 }
             }
 
-            // --- LÓGICA DE LISTAR LOGINS (AGORA CHAMANDO A EDGE FUNCTION) ---
+            // --- LÓGICA DE LISTAR LOGINS (AGORA CONSULTANDO public.perfis) ---
             async function showListarLoginsScreen() {
-                usersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Carregando usuários...</td></tr>';
+                usersTableBody.innerHTML = '<tr><td colspan="1" style="text-align: center; padding: 20px;">Carregando usuários...</td></tr>';
                 listarLoginsMessage.style.display = 'none';
 
                 if (currentUser.email !== ADMIN_MASTER_EMAIL) {
@@ -1470,7 +1474,7 @@
                 }
 
                 try {
-                    // Consulta a nova tabela 'perfis'
+                    // Consultar a nova tabela 'perfis'
                     const { data: allUsers, error: allUsersError } = await _supabase
                         .from('perfis') // MUDANÇA AQUI: AGORA CONSULTA 'perfis'
                         .select('id, email, created_at, nome_completo'); // Ajuste os campos que você quer
@@ -1479,21 +1483,18 @@
                         console.error("Erro ao buscar usuários (tabela perfis):", allUsersError);
                         listarLoginsMessage.textContent = `Erro ao carregar usuários: ${allUsersError.message}.`;
                         listarLoginsMessage.style.display = 'block';
-                        usersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Erro ao carregar usuários.</td></tr>';
+                        usersTableBody.innerHTML = '<tr><td colspan="1" style="text-align: center; padding: 20px;">Erro ao carregar usuários.</td></tr>';
                         return;
                     }
                     
                     usersTableBody.innerHTML = '';
                     if (allUsers.length === 0) {
-                        usersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Nenhum usuário encontrado.</td></tr>';
+                        usersTableBody.innerHTML = '<tr><td colspan="1" style="text-align: center; padding: 20px;">Nenhum usuário encontrado.</td></tr>';
                     } else {
                         allUsers.forEach(user => {
                             const row = usersTableBody.insertRow();
                             row.innerHTML = `
                                 <td>${user.email || 'N/A'}</td>
-                                <td>${user.id || 'N/A'}</td>
-                                <td>${user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : 'N/A'}</td>
-                                <td>${user.nome_completo || 'N/A'}</td>
                             `;
                         });
                     }
@@ -1501,7 +1502,7 @@
                     console.error("Erro inesperado ao listar usuários:", error);
                     listarLoginsMessage.textContent = `Erro inesperado: ${error.message}.`;
                     listarLoginsMessage.style.display = 'block';
-                    usersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Erro ao carregar usuários.</td></tr>';
+                    usersTableBody.innerHTML = '<tr><td colspan="1" style="text-align: center; padding: 20px;">Erro ao carregar usuários.</td></tr>';
                 }
                 showScreen('listarLogins');
             }
