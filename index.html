@@ -799,18 +799,20 @@
                                 <option value="Recreação">Recreação</option>
                             </select>
                         </div>
-                        <div id="editDiariaCamposDinamicos" class="form-group"> 
-                            <label for="editDiariaDobrou" style="display: inline-block; margin-right: 10px;">Dobrou o turno?</label>
-                            <input type="checkbox" id="editDiariaDobrou">
-                        </div>
-                        <div class="form-row" id="editDiariaHorasContainer">
+                        <div id="editDiariaCamposDinamicos" style="display: none;"> 
                             <div class="form-group">
-                                <label for="editDiariaHoraEntrada">Horário de Entrada:</label>
-                                <input type="time" id="editDiariaHoraEntrada">
+                                <label for="editDiariaDobrou" style="display: inline-block; margin-right: 10px;">Dobrou o turno?</label>
+                                <input type="checkbox" id="editDiariaDobrou">
                             </div>
-                            <div class="form-group">
-                                <label for="editDiariaHoraSaida">Horário de Saída:</label>
-                                <input type="time" id="editDiariaHoraSaida">
+                            <div class="form-row" id="editDiariaHorasContainer">
+                                <div class="form-group">
+                                    <label for="editDiariaHoraEntrada">Horário de Entrada:</label>
+                                    <input type="time" id="editDiariaHoraEntrada">
+                                </div>
+                                <div class="form-group">
+                                    <label for="editDiariaHoraSaida">Horário de Saída:</label>
+                                    <input type="time" id="editDiariaHoraSaida">
+                                </div>
                             </div>
                         </div>
                         <div class="form-group"><label for="editDiariaValorPago">Valor Calculado:</label><input type="text" id="editDiariaValorPago" readonly></div>
@@ -2187,9 +2189,9 @@
                 
                 // Lançamento de Diárias
                 btnGoToLancarDiaria.addEventListener('click', showLancarDiariasScreen);
-                btnDiariasVoltar.addEventListener('click', () => showScreen('dashboard'));
-                diariaColaboradorSelect.addEventListener('change', toggleDiariaFields);
-                diariaDobrouCheckbox.addEventListener('change', toggleDiariaFields);
+                // CORREÇÃO AQUI: Passa false explicitamente para isEditContext
+                diariaColaboradorSelect.addEventListener('change', () => toggleDiariaFields(false));
+                diariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(false));
                 diariaHoraEntradaInput.addEventListener('change', () => calculateAndSetDiariaValue(false)); // Para novos lançamentos
                 diariaHoraSaidaInput.addEventListener('change', () => calculateAndSetDiariaValue(false)); // Para novos lançamentos
                 diariaColaboradorSelect.addEventListener('change', () => calculateAndSetDiariaValue(false)); // para forçar cálculo ao trocar colab
