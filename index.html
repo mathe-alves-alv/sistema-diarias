@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Diárias</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+    <style>
+        /* Variáveis de Design Global */
+        :root {
+            --color-primary: #3f6ad8; /* Azul principal mais moderno */
+            --color-secondary: #6c757d; /* Cinza secundário */
+            --color-success: #28a745; /* Verde padrão */
+            --color-danger: #dc3545; /* Vermelho padrão */
+            
+            --color-background-light: #f8f9fa; /* Fundo suave, quase branco */
+            --color-background-medium: #e9ecef; /* Para cabeçalhos de tabela */
+            --color-surface: #ffffff; /* Fundo de cards e elementos */
+            
+            --color-text-dark: #343a40; /* Texto principal escuro */
+            --color-text-muted: #6c757d; /* Texto secundário */
+            --color-text-on-primary: #ffffff; /* Texto sobre o azul principal */
+            
+            --border-radius-soft: 0.5rem; /* Bordas arredondadas */
+            --shadow-subtle: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.08); /* Sombra mais discreta */
+            --shadow-medium: 0 0.3rem 0.8rem rgba(0, 0, 0, 0.12); /* Sombra ao hover */
+            
+            --spacing-unit: 1rem; /* Unidade base de espaçamento */
+        }
+
+        /* Base do Corpo */
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; /* Fonte mais moderna e limpa */
+            margin: 0;
+            padding: var(--spacing-unit);
+            background-color: var(--color-background-light);
+            color: var(--color-text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            line-height: 1.6;
+            font-size: 16px; /* Tamanho base da fonte */
+        }
+
+        /* Contêiner Principal */
+        .container {
+            width: 100%;
+            max-width: 1024px; /* Um pouco mais compacto para foco */
+            margin-top: calc(var(--spacing-unit) * 2);
+        }
+
+        /* Gerenciamento de Telas */
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeInView 0.5s ease-out; }
+        @keyframes fadeInView { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* Estilo dos Cards */
+        .card {
+            background-color: var(--color-surface);
+            padding: calc(var(--spacing-unit) * 1.5);
+            border-radius: var(--border-radius-soft);
+            box-shadow: var(--shadow-subtle);
+            border: 1px solid var(--color-background-medium); /* Borda sutil */
+            margin-bottom: var(--spacing-unit);
+        }
+
+        /* Títulos */
+        h1, h2, h3 { 
+            text-align: center; 
+            margin-top: 0; 
+            color: var(--color-primary); /* Títulos em cor primária */
+            line-height: 1.2; 
+            font-weight: 600; /* Mais peso */
+        }
+        h1 { font-size: 2.2rem; margin-bottom: var(--spacing-unit); }
+        h2 { font-size: 1.8rem; text-align: left; margin-bottom: calc(var(--spacing-unit) * 1.2); }
+        h3 { 
+            text-align: left; /* Default para h3 internos */
+            border-bottom: 1px solid var(--color-background-medium); 
+            padding-bottom: calc(var(--spacing-unit) * 0.5); 
+            margin-bottom: calc(var(--spacing-unit) * 1.25); 
+            font-size: 1.3rem;
+            color: var(--color-text-dark); /* Sub-títulos em texto escuro */
+        }
+
+        /* Botões Base */
+        button {
+            border: none;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--border-radius-soft);
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: var(--shadow-subtle);
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            opacity: 0.95;
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .btn-primary { background-color: var(--color-primary); color: var(--color-text-on-primary); }
+        .btn-secondary { background-color: var(--color-secondary); color: var(--color-text-on-primary); }
+        .btn-success { background-color: var(--color-success); color: var(--color-text-on-primary); }
+        
+        /* Inputs e Selects */
+        input, select {
+            width: 100%;
+            padding: calc(var(--spacing-unit) * 0.75);
+            margin-bottom: var(--spacing-unit);
+            border: 1px solid var(--input-border-color);
+            border-radius: var(--border-radius-soft);
+            box-sizing: border-box;
+            font-size: 1rem;
+            background-color: var(--color-surface);
+            color: var(--color-text-dark);
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input:focus, select:focus {
+            border-color: var(--color-primary);
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(63, 106, 216, 0.25); /* Sombra de foco com a cor primária */
+        }
+        input[type="checkbox"] { 
+            width: auto; height: auto; transform: scale(1.1); margin-left: 5px; 
+            vertical-align: middle; 
+            margin-bottom: 0; 
+        }
+        input[readonly] { 
+            background-color: var(--color-background-light); 
+            cursor: not-allowed; 
+            opacity: 0.8; 
+        }
+        
+        label { 
+            display: block; margin-bottom: calc(var(--spacing-unit) * 0.5); 
+            font-weight: 500; 
+            color: var(--color-text-dark); 
+        }
+        .form-group { margin-bottom: var(--spacing-unit); }
+        
+        /* Mensagens de Erro */
+        #loginErrorMessage, #createUserErrorMessage, #changePasswordErrorMessage, #listarLoginsMessage { 
+            color: var(--color-danger); 
+            margin-top: var(--spacing-unit); 
+            text-align: center; 
+            display: none; 
+            font-weight: 600; 
+            background-color: rgba(220, 53, 69, 0.1); 
+            padding: calc(var(--spacing-unit) * 0.5);
+            border-radius: var(--border-radius-soft);
+            border: 1px solid var(--color-danger);
+        }
+
+        /* Cabeçalho do Dashboard */
+        .dashboard-header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: calc(var(--spacing-unit) * 1.5); 
+            flex-wrap: wrap; 
+        }
+        .dashboard-header div { margin-bottom: var(--spacing-unit); }
+        .dashboard-header button { width: 100%; } 
+
+        /* Wrapper de Login */
+        .login-wrapper { max-width: 400px; margin: calc(var(--spacing-unit) * 3) auto; }
+        .login-wrapper .app-title { font-size: 2rem; margin-bottom: calc(var(--spacing-unit) * 1.5); color: var(--color-primary); }
+
+        /* Estilo das Tabelas de Dados */
+        .data-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 0.9rem; 
+            background-color: var(--color-surface);
+        }
+        .data-table th, .data-table td { 
+            border: 1px solid var(--color-background-medium); 
+            padding: calc(var(--spacing-unit) * 0.6); 
+            text-align: left; 
+        }
+        .data-table thead th { 
+            background-color: var(--color-background-medium); 
+            font-weight: 600; 
+            color: var(--color-text-dark);
+            text-transform: uppercase; 
+        }
+        .data-table tbody tr:nth-child(even) { 
+            background-color: var(--color-background-light);
+        }
+        .data-table tbody tr:hover { 
+            background-color: #e2e6ea; 
+            cursor: default;
+        }
+        
+        .card .table-responsive {
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch; 
+            padding-bottom: 5px; 
+            border-radius: var(--border-radius-soft); 
+            border: 1px solid var(--color-background-medium);
+        }
+
+        /* Grid de Botões do Admin/Usuário */
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+            gap: var(--spacing-unit); 
+            margin-top: var(--spacing-unit);
+        }
+        .admin-button {
+            height: 120px; 
+            font-size: 0.9rem; 
+            padding: 0.5rem;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            background-color: var(--color-surface); 
+            border: 1px solid var(--color-background-medium);
+            border-radius: var(--border-radius-soft);
+            text-decoration: none; 
+            color: var(--color-text-dark); 
+            box-shadow: var(--shadow-subtle);
+        }
+        .admin-button:hover {
+            transform: translateY(-3px); 
+            box-shadow: var(--shadow-medium);
+            background-color: var(--color-background-light); 
+        }
+        .admin-button svg { 
+            width: 38px; height: 38px; 
+            margin-bottom: calc(var(--spacing-unit) * 0.5); 
+            color: var(--color-primary); 
+        }
+        .admin-button span {
+            font-weight: 500;
+        }
+
+        /* Linhas de Formulário */
+        .form-row { 
+            display: flex; 
+            gap: var(--spacing-unit); 
+            flex-direction: column; 
+        }
+        .form-row .form-group { flex: 1; }
+
+        /* Media Queries para Telas Maiores (Desktop/Tablet) */
+        @media (min-width: 768px) {
+            body { padding: calc(var(--spacing-unit) * 2); }
+            .container { margin-top: calc(var(--spacing-unit) * 2.5); }
+            .card { padding: calc(var(--spacing-unit) * 2); }
+            h1 { font-size: 2.5rem; }
+            h2 { font-size: 2rem; }
+            h3 { text-align: left; font-size: 1.5rem; } 
+            button { padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5); }
+            .dashboard-header { flex-wrap: nowrap; }
+            .dashboard-header div { margin-bottom: 0; }
+            .dashboard-header button { width: auto; }
+            .admin-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+                gap: calc(var(--spacing-unit) * 1.5);
+                margin-top: calc(var(--spacing-unit) * 1.5);
+            }
+            .admin-button {
+                height: 140px; 
+                font-size: 1rem;
+                padding: var(--spacing-unit);
+            }
+            .admin-button svg { 
+                width: 44px; height: 44px; 
+                margin-bottom: var(--spacing-unit); 
+            }
+            .form-row { flex-direction: row; }
+            .data-table { font-size: 1rem; }
+            .data-table th, .data-table td { padding: calc(var(--spacing-unit) * 0.75); }
+        }
+        /* Ajuste fino para o input de checkbox */
+        .form-group label[for="diariaDobrou"] {
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+            margin-bottom: 0;
+        }
+        #diariaDobrou {
+            vertical-align: middle;
+            margin-top: 0;
+        }
+
+        /* Estilos específicos para o resumo do relatório na tela */
+        .report-summary-section {
+            margin-top: calc(var(--spacing-unit) * 1.5);
+            margin-bottom: calc(var(--spacing-unit) * 1.5);
+            padding-top: calc(var(--spacing-unit) * 0.5);
+            border-top: 1px solid var(--color-background-medium);
+        }
+        .report-summary-section h3 {
+            border-bottom: none;
+            text-align: left;
+            margin-bottom: calc(var(--spacing-unit) * 0.5);
+            padding-bottom: 0;
+            color: var(--color-text-dark);
+        }
+        .report-summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        .report-summary-table th, .report-summary-table td {
+            border: 1px solid var(--color-background-medium);
+            padding: calc(var(--spacing-unit) * 0.5);
+            text-align: left;
+        }
+        .report-summary-table thead th {
+            background-color: var(--color-primary);
+            color: var(--color-text-on-primary);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .report-summary-table.payments-table thead th {
+            background-color: var(--color-primary);
+        }
+        .report-summary-table.expenses-table thead th {
+            background-color: var(--color-success);
+        }
+        .report-summary-table tbody tr:nth-child(even) {
+            background-color: var(--color-background-light);
+        }
+        .report-summary-table tbody tr:hover {
+            background-color: #e2e6ea;
+        }
+        .report-summary-table tfoot tr {
+            background-color: var(--color-text-dark);
+            color: var(--color-text-on-primary);
+            font-weight: bold;
+        }
+        .report-summary-table td.text-right {
+            text-align: right;
+        }
+        .report-summary-table th.text-right {
+            text-align: right;
+        }
+        .report-summary-table td.text-left {
+            text-align: left;
+        }
+
+        /* Botões de Relatório (PDF e XLSX) */
+        .report-buttons {
+            display: flex;
+            gap: var(--spacing-unit);
+            margin-top: var(--spacing-unit);
+            flex-wrap: wrap; /* Para mobile */
+        }
+        .report-buttons button {
+            flex: 1; /* Ocupa espaço igualmente */
+        }
+        @media (min-width: 768px) {
+            .report-buttons button {
+                flex: none; /* Em desktop, volta a ser o tamanho do conteúdo */
+                width: auto;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div id="mainContainer" class="container">
+
+        <div id="screenLogin" class="screen">
+            <div class="login-wrapper">
+                <h1 class="app-title">Sistema de Diárias</h1>
+                <div class="card">
+                    <h2>Login</h2>
+                    <div class="form-group"><label for="loginEmail">Email:</label><input type="email" id="loginEmail"></div>
+                    <div class="form-group"><label for="loginPassword">Senha:</label><input type="password" id="loginPassword"></div>
+                    <button class="btn-primary" id="loginButton" style="width: 100%;">Entrar</button>
+                    <div id="loginErrorMessage"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenDashboard" class="screen">
+            <div class="card">
+                <div class="dashboard-header">
+                    <div>
+                        <h2>Painel de Controle</h2>
+                        <p style="margin: 0; color: var(--color-text-muted);">Logado como: <strong id="userEmailDisplay" style="color: var(--color-text-dark);"></strong></p>
+                    </div>
+                    <button id="logoutButton" class="btn-secondary">Sair</button>
+                </div>
+                
+                <div id="userMainPanel"> 
+                    <h3>Opções do Sistema</h3>
+                    <div class="admin-grid">
+                        <button id="btnGoToLancarDiaria" class="admin-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-receipt-text">
+                                <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2Z"/>
+                                <path d="M12 8h6"/>
+                                <path d="M12 12h6"/>
+                                <path d="M12 16h6"/>
+                            </svg>
+                            <span>Lançar Diárias</span>
+                        </button>
+                        <button id="btnGoToListarColaboradores" class="admin-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            <span>Colaboradores</span>
+                        </button>
+                        <button id="btnGoToRelatorios" class="admin-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-list">
+                                <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                                <path d="M12 11h4"/>
+                                <path d="M12 15h4"/>
+                                <path d="M8 11h.01"/>
+                                <path d="M8 15h.01"/>
+                            </svg>
+                            <span>Relatórios</span>
+                        </button>
+                        
+                        <button id="btnGoToCriarLogin" class="admin-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <line x1="19" x2="19" y1="8" y2="14"/>
+                                <line x1="22" x2="16" y1="11" y2="11"/>
+                            </svg>
+                            <span>Criar Login</span>
+                        </button>
+                        
+                        <button id="btnGoToListarLogins" class="admin-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users-2">
+                                <path d="M14 19a6 6 0 0 0-12 0"/>
+                                <circle cx="8" cy="9" r="4"/>
+                                <path d="M22 19a6 6 0 0 0-12 0"/>
+                                <circle cx="16" cy="9" r="4"/>
+                            </svg>
+                            <span>Listar Logins</span>
+                        </button>
+                        
+                        <button id="btnGoToAlterarSenha" class="admin-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key-round">
+                                <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h3v-3h3V9h3V6c0-.6-.4-1-1-1H9c-.6 0-1 .4-1 1v3H5v3H2Z"/>
+                                <path d="M7 9h.01"/>
+                            </svg>
+                            <span>Alterar Senha</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenAdicionarColaborador" class="screen"> 
+            <button id="btnAdicionarColabVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar à Lista</button> 
+            <div class="card"> 
+                <h2>Adicionar / Editar Colaborador</h2> 
+                <div class="card"> 
+                    <h3 id="colaboradorFormTitle">Adicionar Novo Colaborador</h3> 
+                    <div class="form-group"><label for="colabNome">Nome Completo:</label><input type="text" id="colabNome" ></div> 
+                    <div class="form-group">
+                        <label for="colabFuncao">Função:</label>
+                        <select id="colabFuncao">
+                            <option value="">-- Selecione a Função --</option>
+                            <option value="Garçom">Garçom</option>
+                            <option value="Cumim">Cumim</option>
+                            <option value="ASG">ASG</option>
+                            <option value="Recreação">Recreação</option>
+                            <option value="Recepção">Recepção</option>
+                        </select>
+                    </div> 
+                    <div class="form-group">
+                        <label for="colabSetor">Setor:</label>
+                        <select id="colabSetor">
+                            <option value="">-- Selecione o Setor --</option>
+                            <option value="Cozinha">Cozinha</option>
+                            <option value="Salão">Salão</option>
+                            <option value="ADM">ADM</option>
+                            <option value="ASG">ASG</option>
+                            <option value="Recreação">Recreação</option>
+                        </select>
+                    </div> 
+                    <div class="form-group"><label for="colabPix">Chave PIX:</label><input type="text" id="colabPix" ></div> 
+                    <div class="form-group"><label for="colabCpf">CPF:</label><input type="text" id="colabCpf" placeholder="Ex: 000.000.000-00"></div>
+                    <div class="form-group"><label for="colabTelefone">Telefone:</label><input type="tel" id="colabTelefone" placeholder="Ex: (00) 90000-0000"></div>
+                    <div class="form-group"><label for="colabEndereco">Endereço:</label><input type="text" id="colabEndereco" placeholder="Rua, Número, Bairro, Cidade-UF"></div>
+                    <button id="btnSalvarColaborador" class="btn-success">Salvar Novo Colaborador</button> 
+                </div> 
+            </div> 
+        </div>
+        <div id="screenListarColaboradores" class="screen">
+            <button id="btnListarColabVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
+            <div class="card">
+                <h2>Colaboradores Cadastrados</h2>
+                <button id="btnGoToAdicionarColaborador" class="btn-primary" style="margin-bottom: var(--spacing-unit);">+ Adicionar Novo Colaborador</button>
+                <div class="table-responsive"> 
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nome Completo</th>
+                                <th>Função</th>
+                                <th>Setor</th>
+                                <th>Chave PIX</th>
+                                <th>CPF</th>
+                                <th>Telefone</th>
+                                <th>Endereço</th>
+                                <th>Ações</th> </tr>
+                        </thead>
+                        <tbody id="colaboradoresTableBody">
+                            <tr><td colspan="8" style="text-align: center; padding: 20px;">Carregando colaboradores...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="screenLancarDiarias" class="screen">
+             <button id="btnDiariasVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
+             <div class="card">
+                 <h2>Lançamento de Diárias</h2>
+                 <div class="form-group">
+                     <label for="diariaColaborador">Colaborador:</label>
+                     <select id="diariaColaborador"></select>
+                 </div>
+                 <div class="form-row">
+                     <div class="form-group">
+                         <label for="diariaFuncao">Função:</label>
+                         <input type="text" id="diariaFuncao" readonly>
+                     </div>
+                     <div class="form-group">
+                         <label for="diariaSetor">Setor:</label>
+                         <input type="text" id="diariaSetor" readonly>
+                     </div>
+                 </div>
+                 <div class="form-group">
+                     <label for="diariaData">Data da Diária:</label>
+                     <input type="date" id="diariaData">
+                 </div>
+                 
+                 <div id="diariaCamposDinamicos" style="display:none; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+                     <div class="form-group">
+                         <label for="diariaDobrou" style="display: inline-block; margin-right: 10px;">Dobrou o turno?</label>
+                         <input type="checkbox" id="diariaDobrou">
+                     </div>
+                     <div class="form-row" id="diariaHorasContainer">
+                         <div class="form-group">
+                             <label for="diariaHoraEntrada">Horário de Entrada:</label>
+                             <input type="time" id="diariaHoraEntrada">
+                         </div>
+                         <div class="form-group">
+                             <label for="diariaHoraSaida">Horário de Saída:</label>
+                             <input type="time" id="diariaHoraSaida">
+                         </div>
+                     </div>
+                 </div>
+                  <button id="btnSalvarDiaria" class="btn-success" style="width: 100%;">Lançar Diária</button>
+             </div>
+        </div>
+
+        <div id="screenRelatorios" class="screen">
+            <button id="btnRelatoriosVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
+            <div class="card">
+                <h2>Gerar Relatório de Diárias</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="relatorioDataInicio">Data Início:</label>
+                        <input type="date" id="relatorioDataInicio">
+                    </div>
+                    <div class="form-group">
+                        <label for="relatorioDataFim">Data Fim:</label>
+                        <input type="date" id="relatorioDataFim">
+                    </div>
+                </div>
+                <div class="report-buttons">
+                    <button id="btnVerResumo" class="btn-primary">Ver Resumo na Tela</button>
+                    <button id="btnGerarRelatorioPdf" class="btn-primary">Gerar PDF</button>
+                    <button id="btnGerarRelatorioXlsx" class="btn-success">Gerar XLSX</button>
+                </div>
+
+                <div id="resumoPagamentos" class="report-summary-section" style="display: none;">
+                    <h3>Pagamentos por Colaborador</h3>
+                    <div class="table-responsive">
+                        <table class="report-summary-table payments-table">
+                            <thead><tr><th>Nome Completo</th><th>Chave PIX</th><th class="text-right">Valor Total</th></tr></thead>
+                            <tbody id="resumoPagamentosBody"></tbody>
+                            <tfoot><tr><td colspan="2" class="text-left">Total Geral</td><td id="resumoPagamentosTotal" class="text-right"></td></tr></tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="resumoGastos" class="report-summary-section" style="display: none;">
+                    <h3>Gastos por Setor</h3>
+                    <div class="table-responsive">
+                        <table class="report-summary-table expenses-table">
+                            <thead><tr><th>Setor</th><th class="text-right">Valor Total</th></tr></thead>
+                            <tbody id="resumoGastosBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenCriarLogin" class="screen">
+            <button id="btnCriarLoginVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
+            <div class="card">
+                <h2>Criar Novo Acesso</h2>
+                <div class="form-group"><label for="createUserEmail">Email:</label><input type="email" id="createUserEmail"></div>
+                <div class="form-group"><label for="generatedPasswordDisplay">Senha Gerada:</label><input type="text" id="generatedPasswordDisplay" readonly></div>
+                <button class="btn-primary" id="btnCreateUser" style="width: 100%;">Gerar Senha e Criar Usuário</button>
+                <div id="createUserErrorMessage"></div>
+            </div>
+        </div>
+
+        <div id="screenListarLogins" class="screen">
+            <button id="btnListarLoginsVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
+            <div class="card">
+                <h2>Logins Cadastrados</h2>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>ID do Usuário</th>
+                                <th>Status</th>
+                                <th>Criado Em</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr><td colspan="4" style="text-align: center; padding: 20px;">Carregando usuários...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="listarLoginsMessage" style="display:none; color: var(--color-text-dark); margin-top: 1rem;"></div>
+            </div>
+        </div>
+
+        <div id="screenAlterarSenha" class="screen">
+            <button id="btnAlterarSenhaVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
+            <div class="card">
+                <h2>Alterar Minha Senha</h2>
+                <div class="form-group"><label for="currentPassword">Senha Atual:</label><input type="password" id="currentPassword"></div>
+                <div class="form-group"><label for="newPassword">Nova Senha:</label><input type="password" id="newPassword"></div>
+                <div class="form-group"><label for="confirmNewPassword">Confirmar Nova Senha:</label><input type="password" id="confirmNewPassword"></div>
+                <button class="btn-primary" id="btnChangePassword" style="width: 100%;">Alterar Senha</button>
+                <div id="changePasswordErrorMessage"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const SUPABASE_URL = 'https://ngfmnxhzwgpasygmktla.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nZm1ueGh6d2dwYXN5Z21rdGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA5NjkzODAsImV4cCI6MjA2NjU0NTM4MH0.iY3Qu-DcMXL_IPq2iNb79UkotjThFTqwBfPJtAgSEzY';
+            const { createClient } = supabase;
+            const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            let currentUser = null;
+            let colaboradoresCache = [];
+            let editingColaboradorId = null; // Para controlar edição de colaborador
+
+            const { jsPDF } = window.jspdf;
+
+            // --- DOM SELECTORS ---
+            const screens = {
+                login: document.getElementById('screenLogin'), 
+                dashboard: document.getElementById('screenDashboard'),
+                adicionarColaborador: document.getElementById('screenAdicionarColaborador'), /* Renomeado */
+                listarColaboradores: document.getElementById('screenListarColaboradores'), /* Nova tela */
+                lancarDiarias: document.getElementById('screenLancarDiarias'),
+                relatorios: document.getElementById('screenRelatorios'),
+                criarLogin: document.getElementById('screenCriarLogin'),
+                listarLogins: document.getElementById('screenListarLogins'), 
+                alterarSenha: document.getElementById('screenAlterarSenha') 
+            };
+            const loginEmailInput = document.getElementById('loginEmail'), loginPasswordInput = document.getElementById('loginPassword'), loginButton = document.getElementById('loginButton'), loginErrorMessage = document.getElementById('loginErrorMessage');
+            const logoutButton = document.getElementById('logoutButton'), userEmailDisplay = document.getElementById('userEmailDisplay');
+            const userMainPanel = document.getElementById('userMainPanel'); 
+            
+            // Colaboradores: Renomeados e novos seletores
+            const btnGoToListarColaboradores = document.getElementById('btnGoToListarColaboradores'); /* Botão do dashboard */
+            const btnGoToAdicionarColaborador = document.getElementById('btnGoToAdicionarColaborador'); /* Botão da lista de colabs */
+            const btnAdicionarColabVoltar = document.getElementById('btnAdicionarColabVoltar'); /* Botão de voltar do form de add/edit */
+            const btnListarColabVoltar = document.getElementById('btnListarColabVoltar'); /* Botão de voltar da lista */
+            const colaboradorFormTitle = document.getElementById('colaboradorFormTitle'); /* Título do formulário */
+
+            const btnSalvarColaborador = document.getElementById('btnSalvarColaborador');
+            const colabNomeInput = document.getElementById('colabNome');
+            const colabFuncaoSelect = document.getElementById('colabFuncao'); 
+            const colabSetorSelect = document.getElementById('colabSetor'); 
+            const colabPixInput = document.getElementById('colabPix');
+            const colabCpfInput = document.getElementById('colabCpf'), colabTelefoneInput = document.getElementById('colabTelefone'), colabEnderecoInput = document.getElementById('colabEndereco');
+            const colaboradoresTableBody = document.getElementById('colaboradoresTableBody');
+            
+            const btnGoToLancarDiaria = document.getElementById('btnGoToLancarDiaria'), btnDiariasVoltar = document.getElementById('btnDiariasVoltar'), btnSalvarDiaria = document.getElementById('btnSalvarDiaria');
+            const diariaColaboradorSelect = document.getElementById('diariaColaborador'), diariaFuncaoInput = document.getElementById('diariaFuncao'), diariaSetorInput = document.getElementById('diariaSetor'), diariaDataInput = document.getElementById('diariaData'), diariaCamposDinamicos = document.getElementById('diariaCamposDinamicos'), diariaDobrouCheckbox = document.getElementById('diariaDobrou'), diariaHorasContainer = document.getElementById('diariaHorasContainer'), diariaHoraEntradaInput = document.getElementById('diariaHoraEntrada'), diariaHoraSaidaInput = document.getElementById('diariaHoraSaida');
+            
+            // Relatórios: Novos seletores para resumo na tela e XLSX
+            const btnGoToRelatorios = document.getElementById('btnGoToRelatorios');
+            const btnRelatoriosVoltar = document.getElementById('btnRelatoriosVoltar');
+            const relatorioDataInicioInput = document.getElementById('relatorioDataInicio');
+            const relatorioDataFimInput = document.getElementById('relatorioDataFim');
+            const btnVerResumo = document.getElementById('btnVerResumo'); /* Novo */
+            const btnGerarRelatorioPdf = document.getElementById('btnGerarRelatorioPdf');
+            const btnGerarRelatorioXlsx = document.getElementById('btnGerarRelatorioXlsx'); /* Novo */
+            const resumoPagamentosDiv = document.getElementById('resumoPagamentos'); /* Novo */
+            const resumoPagamentosBody = document.getElementById('resumoPagamentosBody'); /* Novo */
+            const resumoPagamentosTotal = document.getElementById('resumoPagamentosTotal'); /* Novo */
+            const resumoGastosDiv = document.getElementById('resumoGastos'); /* Novo */
+            const resumoGastosBody = document.getElementById('resumoGastosBody'); /* Novo */
+
+            const btnGoToCriarLogin = document.getElementById('btnGoToCriarLogin');
+            const btnCriarLoginVoltar = document.getElementById('btnCriarLoginVoltar');
+            const createUserEmailInput = document.getElementById('createUserEmail');
+            const generatedPasswordDisplay = document.getElementById('generatedPasswordDisplay'); 
+            const btnCreateUser = document.getElementById('btnCreateUser');
+            const createUserErrorMessage = document.getElementById('createUserErrorMessage');
+
+            const btnGoToListarLogins = document.getElementById('btnGoToListarLogins');
+            const btnListarLoginsVoltar = document.getElementById('btnListarLoginsVoltar');
+            const usersTableBody = document.getElementById('usersTableBody');
+            const listarLoginsMessage = document.getElementById('listarLoginsMessage');
+
+            const btnGoToAlterarSenha = document.getElementById('btnGoToAlterarSenha');
+            const btnAlterarSenhaVoltar = document.getElementById('btnAlterarSenhaVoltar');
+            const currentPasswordInput = document.getElementById('currentPassword');
+            const newPasswordInput = document.getElementById('newPassword');
+            const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
+            const btnChangePassword = document.getElementById('btnChangePassword');
+            const changePasswordErrorMessage = document.getElementById('changePasswordErrorMessage');
+
+            // <<< IMPORTANTE: SUBSTITUA matheus@holysalt.com PELO SEU EMAIL DE ADMINISTRADOR MASTER REAL >>>
+            const ADMIN_MASTER_EMAIL = 'matheus@holysalt.com'; 
+            
+            // --- CORE FUNCTIONS ---
+            function showScreen(screenId) {
+                Object.values(screens).forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                if (screens[screenId]) {
+                    screens[screenId].classList.add('active');
+                } else {
+                    console.error(`Tela com ID '${screenId}' não encontrada.`);
+                }
+            }
+
+            async function handleLogin() {
+                loginErrorMessage.style.display = 'none';
+                const email = loginEmailInput.value;
+                const password = loginPasswordInput.value;
+
+                const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+
+                if (error) {
+                    loginErrorMessage.textContent = `Erro de login: ${error.message}`;
+                    loginErrorMessage.style.display = 'block';
+                } else if (data.user) {
+                    await setupDashboard(data.user);
+                }
+            }
+
+            async function setupDashboard(user) {
+                currentUser = user;
+                userEmailDisplay.textContent = user.email;
+
+                userMainPanel.style.display = 'block'; 
+                
+                if (user.email === ADMIN_MASTER_EMAIL) { 
+                    btnGoToCriarLogin.style.display = 'flex'; 
+                    btnGoToListarLogins.style.display = 'flex';
+                } else {
+                    btnGoToCriarLogin.style.display = 'none';
+                    btnGoToListarLogins.style.display = 'none';
+                }
+                btnGoToAlterarSenha.style.display = 'flex'; 
+
+                showScreen('dashboard');
+            }
+
+            async function handleLogout() {
+                const { error } = await _supabase.auth.signOut();
+                if (error) {
+                    console.error("Erro ao fazer logout:", error.message);
+                    alert("Erro ao sair. Tente novamente.");
+                } else {
+                    currentUser = null;
+                    showScreen('login');
+                    loginEmailInput.value = '';
+                    loginPasswordInput.value = '';
+                    loginErrorMessage.style.display = 'none';
+                }
+            }
+
+            // --- COLABORADORES: LISTAGEM, ADIÇÃO E EDIÇÃO ---
+
+            // Função para renderizar a tabela de colaboradores
+            function renderColaboradores() {
+                colaboradoresTableBody.innerHTML = '';
+                if (colaboradoresCache.length === 0) {
+                    colaboradoresTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Nenhum colaborador cadastrado.</td></tr>';
+                    return;
+                }
+                colaboradoresCache.forEach(colab => {
+                    const row = colaboradoresTableBody.insertRow();
+                    row.innerHTML = `
+                        <td>${colab.nome_completo}</td>
+                        <td>${colab.funcao}</td>
+                        <td>${colab.setor}</td>
+                        <td>${colab.chave_pix || 'N/A'}</td>
+                        <td>${colab.cpf || 'N/A'}</td>
+                        <td>${colab.telefone || 'N/A'}</td>
+                        <td>${colab.endereco || 'N/A'}</td>
+                        <td>
+                            <button class="btn-secondary btn-sm" data-action="edit" data-id="${colab.id}" style="padding: 5px 10px; font-size: 0.8rem;">Editar</button>
+                            </td>
+                        `;
+                });
+
+                // Adiciona listeners para os botões de editar (e futuramente excluir)
+                colaboradoresTableBody.querySelectorAll('button[data-action="edit"]').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        handleEditarColaborador(id);
+                    });
+                });
+                // Implementar listener para exclusão se for necessário
+            }
+
+            // Função para buscar colaboradores e renderizar
+            async function fetchAndRenderColaboradores() {
+                const { data, error } = await _supabase.from('colaboradores').select('*').order('nome_completo');
+                if (error) {
+                    console.error("Erro ao buscar colaboradores:", error);
+                    alert("Erro ao carregar colaboradores.");
+                    return;
+                }
+                colaboradoresCache = data;
+                renderColaboradores();
+            }
+
+            // Função para lidar com o salvamento/atualização de colaborador
+            async function handleSalvarColaborador() {
+                const nome = colabNomeInput.value.trim();
+                const funcao = colabFuncaoSelect.value.trim(); 
+                const setor = colabSetorSelect.value.trim();
+                const pix = colabPixInput.value.trim();
+                const cpf = colabCpfInput.value.trim();
+                const telefone = colabTelefoneInput.value.trim();
+                const endereco = colabEnderecoInput.value.trim();
+
+                if (!nome || !funcao || !setor) {
+                    alert('Por favor, preencha nome, função e setor do colaborador.');
+                    return;
+                }
+                if (funcao === "") { 
+                    alert('Por favor, selecione uma função válida para o colaborador.');
+                    return;
+                }
+                if (setor === "") { 
+                    alert('Por favor, selecione um setor válido para o colaborador.');
+                    return;
+                }
+
+                let response;
+                if (editingColaboradorId) {
+                    // Modo edição
+                    response = await _supabase.from('colaboradores')
+                        .update({ 
+                            nome_completo: nome, 
+                            funcao: funcao, 
+                            setor: setor, 
+                            chave_pix: pix,
+                            cpf: cpf,
+                            telefone: telefone,
+                            endereco: endereco
+                        })
+                        .eq('id', editingColaboradorId)
+                        .select();
+                } else {
+                    // Modo adição
+                    response = await _supabase.from('colaboradores').insert([
+                        { 
+                            nome_completo: nome, 
+                            funcao: funcao, 
+                            setor: setor, 
+                            chave_pix: pix,
+                            cpf: cpf,
+                            telefone: telefone,
+                            endereco: endereco,
+                            ativo: true 
+                        }
+                    ]).select();
+                }
+
+                const { data, error } = response;
+
+                if (error) {
+                    alert(`Erro ao salvar/atualizar colaborador: ${error.message}`);
+                    console.error("Erro no salvamento/atualização do colaborador:", error);
+                } else {
+                    alert(`Colaborador ${editingColaboradorId ? 'atualizado' : 'salvo'} com sucesso!`);
+                    // Limpar formulário e estado de edição
+                    colabNomeInput.value = '';
+                    colabFuncaoSelect.value = ''; 
+                    colabSetorSelect.value = ''; 
+                    colabPixInput.value = '';
+                    colabCpfInput.value = '';
+                    colabTelefoneInput.value = '';
+                    colabEnderecoInput.value = '';
+                    
+                    editingColaboradorId = null;
+                    colaboradorFormTitle.textContent = 'Adicionar Novo Colaborador';
+                    btnSalvarColaborador.textContent = 'Salvar Novo Colaborador';
+                    btnSalvarColaborador.classList.remove('btn-primary'); 
+                    btnSalvarColaborador.classList.add('btn-success');
+
+                    showScreen('listarColaboradores'); // Volta para a lista
+                    fetchAndRenderColaboradores(); // Recarrega a lista
+                }
+            }
+
+            // Função para lidar com a edição de colaborador
+            async function handleEditarColaborador(id) {
+                const colaborador = colaboradoresCache.find(colab => colab.id === id);
+                if (!colaborador) {
+                    alert('Colaborador não encontrado para edição.');
+                    return;
+                }
+
+                editingColaboradorId = id;
+                colabNomeInput.value = colaborador.nome_completo;
+                colabFuncaoSelect.value = colaborador.funcao;
+                colabSetorSelect.value = colaborador.setor;
+                colabPixInput.value = colaborador.chave_pix || '';
+                colabCpfInput.value = colaborador.cpf || '';
+                colabTelefoneInput.value = colaborador.telefone || '';
+                colabEnderecoInput.value = colaborador.endereco || '';
+
+                colaboradorFormTitle.textContent = 'Editar Colaborador Existente';
+                btnSalvarColaborador.textContent = 'Atualizar Colaborador';
+                btnSalvarColaborador.classList.remove('btn-success');
+                btnSalvarColaborador.classList.add('btn-primary'); 
+                
+                showScreen('adicionarColaborador'); // Vai para a tela de formulário
+            }
+
+            // --- LANÇAMENTO DE DIÁRIAS - LÓGICA (Sem alterações diretas) ---
+            async function showLancarDiariasScreen() {
+                const { data, error } = await _supabase.from('colaboradores').select('id, nome_completo, funcao, setor').eq('ativo', true).order('nome_completo');
+                if(error) { console.error(error); alert("Erro ao carregar colaboradores."); return; }
+                colaboradoresCache = data;
+                
+                diariaColaboradorSelect.innerHTML = '<option value="">-- Selecione um Colaborador --</option>';
+                colaboradoresCache.forEach(colab => {
+                    diariaColaboradorSelect.innerHTML += `<option value="${colab.id}">${colab.nome_completo}</option>`;
+                });
+                
+                diariaDataInput.valueAsDate = new Date();
+                diariaCamposDinamicos.style.display = 'none';
+                [diariaFuncaoInput, diariaSetorInput, diariaHoraEntradaInput, diariaHoraSaidaInput].forEach(i => i.value = '');
+                diariaDobrouCheckbox.checked = false;
+                
+                showScreen('lancarDiarias');
+            }
+
+            function toggleDiariaFields() {
+                const selectedColabId = diariaColaboradorSelect.value;
+                const colaborador = colaboradoresCache.find(c => c.id == selectedColabId);
+                
+                if (!colaborador) {
+                    diariaCamposDinamicos.style.display = 'none';
+                    diariaFuncaoInput.value = '';
+                    diariaSetorInput.value = '';
+                    return;
+                }
+
+                diariaFuncaoInput.value = colaborador.funcao || '---';
+                diariaSetorInput.value = colaborador.setor || '---';
+                
+                const funcao = colaborador.funcao.toLowerCase();
+                if (['cumim', 'asg', 'recepção', 'recepcao'].some(f => funcao.includes(f))) {
+                    diariaCamposDinamicos.style.display = 'block';
+                    diariaHorasContainer.style.display = diariaDobrouCheckbox.checked ? 'none' : 'flex';
+                } else {
+                    diariaCamposDinamicos.style.display = 'none';
+                }
+            }
+            
+            async function handleSalvarDiaria() {
+                const colaboradorId = diariaColaboradorSelect.value;
+                const dataDiaria = diariaDataInput.value;
+                
+                if (!colaboradorId || !dataDiaria) { alert('Por favor, selecione o colaborador e a data.'); return; }
+
+                const colaborador = colaboradoresCache.find(c => c.id == colaboradorId);
+                if (!colaborador) { alert('Colaborador não encontrado. Recarregue a página.'); return; }
+
+                const funcao = colaborador.funcao.toLowerCase();
+                const dobrou = diariaDobrouCheckbox.checked;
+                let horaEntrada = diariaHoraEntradaInput.value;
+                let horaSaida = diariaHoraSaidaInput.value;
+
+                let valorPago = 0;
+                let horasTrabalhadas = 0;
+                
+                if (['cumim', 'asg', 'recepção', 'recepcao'].some(f => funcao.includes(f))) {
+                    if (!dobrou) {
+                        if (!horaEntrada || !horaSaida) {
+                            alert('Para esta função, preencha o horário de entrada e saída, ou marque que dobrou.'); return;
+                        }
+                        const entradaMS = new Date(`1970-01-01T${horaEntrada}:00`).getTime();
+                        const saidaMS = new Date(`1970-01-01T${horaSaida}:00`).getTime();
+                        
+                        if (saidaMS < entradaMS) {
+                            horasTrabalhadas = ((24 * 60 * 60 * 1000) - entradaMS + saidaMS) / (1000 * 60 * 60);
+                        } else if (saidaMS === entradaMS) {
+                             alert("Horário de saída deve ser diferente do de entrada, a menos que dobre."); return;
+                        }
+                        else {
+                            horasTrabalhadas = (saidaMS - entradaMS) / (1000 * 60 * 60);
+                        }
+                    } else {
+                        horasTrabalhadas = 16;
+                        horaEntrada = null;
+                        horaSaida = null;
+                    }
+                }
+
+                if (funcao.includes('garçom')) {
+                    valorPago = 50; 
+                } else if (funcao.includes('recreação') || funcao.includes('recreacao')) {
+                    valorPago = 110;
+                } else if (['cumim', 'asg', 'recepção', 'recepcao'].some(f => funcao.includes(f))) {
+                    const dataObj = new Date(dataDiaria + 'T00:00:00'); 
+                    const diaDaSemana = dataObj.getDay(); 
+                    const isWeekend = (diaDaSemana === 6 || diaDaSemana === 0); 
+
+                    if (dobrou) {
+                        valorPago = isWeekend ? 180 : 160;
+                    } else {
+                        const basePay = isWeekend ? 90 : 80;
+                        const baseHours = 8;
+                        valorPago = (horasTrabalhadas <= baseHours) ? basePay : basePay + ((horasTrabalhadas - baseHours) * 10);
+                    }
+                } else { alert(`Função "${colaborador.funcao}" não tem regra de cálculo definida.`); return; }
+
+                const lancamento = {
+                    colaborador_id: colaboradorId, 
+                    data_diaria: dataDiaria, 
+                    valor_pago: parseFloat(valorPago.toFixed(2)), 
+                    dobrou: dobrou, 
+                    horas_trabalhadas: horasTrabalhadas ? parseFloat(horasTrabalhadas.toFixed(2)) : null,
+                    horario_entrada: horaEntrada,
+                    horario_saida: horaSaida,
+                    funcao_colaborador: colaborador.funcao, 
+                    setor_colaborador: colaborador.setor
+                };
+                
+                const { error } = await _supabase.from('diarias_lancadas').insert([lancamento]);
+                if (error) { 
+                    alert(`Erro ao lançar diária: ${error.message}`); 
+                    console.error("Erro no lançamento da diária:", error);
+                } else {
+                    alert(`Diária de R$ ${valorPago.toFixed(2)} para ${colaborador.nome_completo} lançada com sucesso!`);
+                    showScreen('dashboard');
+                }
+            }
+
+            // --- RELATÓRIOS: PROCESSAMENTO, VISUALIZAÇÃO EM TELA, PDF E XLSX ---
+
+            // Nova função para exibir a tela de relatórios
+            function showRelatoriosScreen() {
+                // Opcional: Resetar campos de data ou esconder resumos anteriores
+                relatorioDataInicioInput.value = '';
+                relatorioDataFimInput.value = '';
+                resumoPagamentosDiv.style.display = 'none';
+                resumoGastosDiv.style.display = 'none';
+                showScreen('relatorios');
+            }
+
+            // Nova função para processar os dados do relatório de forma reutilizável
+            async function processarDadosRelatorio(dataInicio, dataFim) {
+                // Oculta os resumos antigos
+                resumoPagamentosDiv.style.display = 'none';
+                resumoGastosDiv.style.display = 'none';
+
+                const { data: diarias, error: diariasError } = await _supabase
+                    .from('diarias_lancadas')
+                    .select(`
+                        valor_pago,
+                        funcao_colaborador, 
+                        setor_colaborador, 
+                        colaboradores(nome_completo, chave_pix, setor) 
+                    `)
+                    .gte('data_diaria', dataInicio)
+                    .lte('data_diaria', dataFim);
+                
+                if (diariasError) {
+                    console.error("Erro ao buscar diárias para o relatório:", diariasError);
+                    alert("Erro ao buscar dados para relatório. Tente novamente.");
+                    return null;
+                }
+
+                if (diarias.length === 0) {
+                    alert('Nenhuma diária encontrada para o período selecionado.');
+                    return null;
+                }
+
+                const pagamentosPorColaborador = {};
+                const gastosPorSetor = {};
+                let totalGeral = 0;
+
+                diarias.forEach(diaria => {
+                    const nomeColaborador = diaria.colaboradores?.nome_completo || 'Colaborador Desconhecido';
+                    const chavePix = diaria.colaboradores?.chave_pix || 'N/A';
+                    const setor = diaria.setor_colaborador || diaria.colaboradores?.setor || 'Outros'; 
+                    const valorDiaria = parseFloat(diaria.valor_pago);
+
+                    if (isNaN(valorDiaria)) {
+                        console.warn(`Diária com valor inválido ignorada:`, diaria);
+                        return;
+                    }
+
+                    if (!pagamentosPorColaborador[nomeColaborador]) {
+                        pagamentosPorColaborador[nomeColaborador] = {
+                            pix: chavePix,
+                            total: 0
+                        };
+                    }
+                    pagamentosPorColaborador[nomeColaborador].total += valorDiaria;
+
+                    if (!gastosPorSetor[setor]) {
+                        gastosPorSetor[setor] = 0;
+                    }
+                    gastosPorSetor[setor] += valorDiaria;
+
+                    totalGeral += valorDiaria;
+                });
+
+                const tabelaPagamentosData = Object.keys(pagamentosPorColaborador).map(nome => {
+                    return {
+                        nome: nome,
+                        pix: pagamentosPorColaborador[nome].pix,
+                        total: pagamentosPorColaborador[nome].total
+                    };
+                }).sort((a, b) => a.nome.localeCompare(b.nome));
+
+                const tabelaGastosSetorData = Object.keys(gastosPorSetor).map(setor => {
+                    return {
+                        setor: setor,
+                        total: gastosPorSetor[setor]
+                    };
+                }).sort((a, b) => a.setor.localeCompare(b.setor));
+                
+                return {
+                    pagamentos: tabelaPagamentosData,
+                    gastos: tabelaGastosSetorData,
+                    totalGeral: totalGeral,
+                    periodo: { inicio: dataInicio, fim: dataFim }
+                };
+            }
+
+            // Função para exibir o resumo na tela
+            function exibirResumoNaTela(dadosProcessados) {
+                const { pagamentos, gastos, totalGeral, periodo } = dadosProcessados;
+
+                // Limpa e exibe a seção de pagamentos
+                resumoPagamentosBody.innerHTML = '';
+                pagamentos.forEach(item => {
+                    const row = resumoPagamentosBody.insertRow();
+                    row.innerHTML = `
+                        <td class="text-left">${item.nome}</td>
+                        <td class="text-left">${item.pix}</td>
+                        <td class="text-right">R$ ${item.total.toFixed(2)}</td>
+                    `;
+                });
+                resumoPagamentosTotal.textContent = `R$ ${totalGeral.toFixed(2)}`;
+                resumoPagamentosDiv.style.display = 'block';
+
+                // Limpa e exibe a seção de gastos
+                resumoGastosBody.innerHTML = '';
+                gastos.forEach(item => {
+                    const row = resumoGastosBody.insertRow();
+                    row.innerHTML = `
+                        <td class="text-left">${item.setor}</td>
+                        <td class="text-right">R$ ${item.total.toFixed(2)}</td>
+                    `;
+                });
+                resumoGastosDiv.style.display = 'block';
+            }
+
+            // Função para gerar PDF (melhorada com a função de processamento)
+            async function gerarRelatorioPdf() {
+                const dataInicio = relatorioDataInicioInput.value;
+                const dataFim = relatorioDataFimInput.value;
+
+                if (!dataInicio || !dataFim) {
+                    alert('Por favor, selecione as datas de início e fim para o relatório.');
+                    return;
+                }
+                
+                const dadosProcessados = await processarDadosRelatorio(dataInicio, dataFim);
+                if (!dadosProcessados) return; // Se não houver dados ou erro, sai
+
+                const { pagamentos, gastos, totalGeral, periodo } = dadosProcessados;
+
+                // Prepara os dados para autoTable
+                const tabelaPagamentosPDF = pagamentos.map(p => [p.nome, p.pix, `R$ ${p.total.toFixed(2)}`]);
+                const tabelaGastosPDF = gastos.map(g => [g.setor, `R$ ${g.total.toFixed(2)}`]);
+
+                // --- Geração do PDF ---
+                const doc = new jsPDF();
+                const defaultMargin = 15; 
+                // A posição X do texto da célula é: margem da tabela + cellPadding.
+                // Ajuste este offset para alinhar o título da seção com o texto da primeira coluna da tabela.
+                // O cellPadding padrão é 3. Vamos usar isso como base.
+                const sectionTitleX = defaultMargin + 3; // 15 + 3 = 18
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(22);
+                doc.setTextColor(52, 58, 64); 
+                doc.text("Relatório de Diárias", doc.internal.pageSize.getWidth() / 2, 25, { align: "center" });
+
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(12);
+                doc.setTextColor(108, 117, 125); 
+                const startDateFormatted = new Date(periodo.inicio + 'T00:00:00').toLocaleDateString('pt-BR');
+                const endDateFormatted = new Date(periodo.fim + 'T00:00:00').toLocaleDateString('pt-BR');
+                doc.text(`Período: ${startDateFormatted} a ${endDateFormatted}`, doc.internal.pageSize.getWidth() / 2, 35, { align: "center" });
+                
+                const now = new Date();
+                const options = {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                    hour12: false, 
+                    timeZone: 'America/Fortaleza' 
+                };
+                const generatedDateTime = now.toLocaleString('pt-BR', options);
+                doc.text(`Gerado em: ${generatedDateTime}`, doc.internal.pageSize.getWidth() / 2, 42, { align: "center" });
+
+                let yPos = 60; 
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(16);
+                doc.setTextColor(52, 58, 64);
+                // Usar a nova coordenada X ajustada para o título da seção
+                doc.text("Pagamentos por Colaborador", sectionTitleX, yPos); 
+                yPos += 10;
+                doc.autoTable({
+                    startY: yPos,
+                    head: [['Nome Completo', 'Chave PIX', 'Valor Total']],
+                    body: tabelaPagamentosPDF,
+                    theme: 'striped',
+                    styles: { 
+                        fontSize: 10, 
+                        cellPadding: 3, 
+                        overflow: 'linebreak',
+                        font: "helvetica", 
+                        textColor: [52, 58, 64],
+                    },
+                    headStyles: { 
+                        fillColor: [63, 106, 216], 
+                        textColor: 255, 
+                        fontStyle: 'bold',
+                        fontSize: 11,
+                        halign: 'center' 
+                    },
+                    bodyStyles: { textColor: [33, 37, 41] },
+                    alternateRowStyles: { fillColor: [248, 249, 250] },
+                    margin: { horizontal: defaultMargin }, 
+                    columnStyles: {
+                        0: { halign: 'left' },
+                        1: { halign: 'left' },
+                        2: { halign: 'right' } 
+                    },
+                    didDrawPage: function (data) {
+                        let str = "Página " + doc.internal.getNumberOfPages();
+                        doc.setFontSize(10);
+                        doc.setTextColor(108, 117, 125);
+                        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
+                    }
+                });
+
+                yPos = doc.autoTable.previous.finalY + 20; 
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(16);
+                doc.setTextColor(52, 58, 64);
+                // Usar a nova coordenada X ajustada para o título da seção
+                doc.text("Gastos por Setor", sectionTitleX, yPos); 
+                yPos += 10;
+                doc.autoTable({
+                    startY: yPos,
+                    head: [['Setor', 'Valor Total']],
+                    body: tabelaGastosPDF,
+                    theme: 'striped',
+                    styles: { 
+                        fontSize: 10, 
+                        cellPadding: 3, 
+                        overflow: 'linebreak',
+                        font: "helvetica",
+                        textColor: [52, 58, 64],
+                    },
+                    headStyles: { 
+                        fillColor: [40, 167, 69], 
+                        textColor: 255, 
+                        fontStyle: 'bold',
+                        fontSize: 11,
+                        halign: 'center' 
+                    },
+                    bodyStyles: { textColor: [33, 37, 41] },
+                    alternateRowStyles: { fillColor: [248, 249, 250] },
+                    margin: { horizontal: defaultMargin }, 
+                    columnStyles: {
+                        0: { halign: 'left' },
+                        1: { halign: 'right' } 
+                    },
+                    foot: [['TOTAL GERAL', `R$ ${totalGeral.toFixed(2)}`]], 
+                    footStyles: {
+                        fillColor: [52, 58, 64], 
+                        textColor: 255,
+                        fontStyle: 'bold',
+                        fontSize: 11,
+                        halign: 'right', 
+                        cellPadding: 4 
+                    },
+                    didParseCell: function(data) {
+                        if (data.section === 'foot' && data.column.index === 0) {
+                            data.cell.styles.halign = 'left';
+                        }
+                    },
+                    didDrawPage: function (data) {
+                        let str = "Página " + doc.internal.getNumberOfPages();
+                        doc.setFontSize(10);
+                        doc.setTextColor(108, 117, 125);
+                        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
+                    }
+                });
+
+                const filename = `Relatorio_Diarias_${periodo.inicio}_a_${periodo.fim}.pdf`;
+                doc.save(filename);
+            }
+
+            // Função para gerar XLSX
+            async function gerarRelatorioXlsx() {
+                const dataInicio = relatorioDataInicioInput.value;
+                const dataFim = relatorioDataFimInput.value;
+
+                if (!dataInicio || !dataFim) {
+                    alert('Por favor, selecione as datas de início e fim para o relatório.');
+                    return;
+                }
+
+                const dadosProcessados = await processarDadosRelatorio(dataInicio, dataFim);
+                if (!dadosProcessados) return;
+
+                const { pagamentos, gastos, totalGeral, periodo } = dadosProcessados;
+
+                // Dados para a planilha
+                const ws_data = [];
+
+                // Título
+                ws_data.push(["Relatório de Diárias"]);
+                ws_data.push([`Período: ${new Date(periodo.inicio).toLocaleDateString('pt-BR')} a ${new Date(periodo.fim).toLocaleDateString('pt-BR')}`]);
+                ws_data.push([`Gerado em: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })}`]);
+                ws_data.push([]); // Linha em branco
+                
+                // Tabela de Pagamentos por Colaborador
+                ws_data.push(["Pagamentos por Colaborador"]);
+                ws_data.push(["Nome Completo", "Chave PIX", "Valor Total"]);
+                pagamentos.forEach(p => {
+                    ws_data.push([p.nome, p.pix, p.total]);
+                });
+                ws_data.push([]); // Linha em branco
+
+                // Tabela de Gastos por Setor
+                ws_data.push(["Gastos por Setor"]);
+                ws_data.push(["Setor", "Valor Total"]);
+                gastos.forEach(g => {
+                    ws_data.push([g.setor, g.total]);
+                });
+                ws_data.push([]); // Linha em branco
+
+                // Total Geral
+                ws_data.push(["TOTAL GERAL", totalGeral]);
+
+                const ws = XLSX.utils.aoa_to_sheet(ws_data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Relatório Diárias");
+                
+                const filename = `Relatorio_Diarias_${periodo.inicio}_a_${periodo.fim}.xlsx`;
+                XLSX.writeFile(wb, filename);
+
+                alert('Relatório XLSX gerado com sucesso!');
+            }
+
+
+            // --- LÓGICA DE CRIAÇÃO DE LOGIN (Sem alterações diretas) ---
+            function generateRandomNumericPassword(length = 6) {
+                let password = '';
+                for (let i = 0; i < length; i++) {
+                    password += Math.floor(Math.random() * 10).toString();
+                }
+                return password;
+            }
+
+            async function handleCreateUser() {
+                createUserErrorMessage.style.display = 'none';
+                const email = createUserEmailInput.value.trim();
+                const generatedPassword = generateRandomNumericPassword(); 
+                
+                generatedPasswordDisplay.value = generatedPassword; 
+
+                if (!email) {
+                    createUserErrorMessage.textContent = 'Por favor, preencha o email.';
+                    createUserErrorMessage.style.display = 'block';
+                    return;
+                }
+
+                if (currentUser.email !== ADMIN_MASTER_EMAIL) {
+                    createUserErrorMessage.textContent = 'Você não tem permissão para criar novos usuários.';
+                    createUserErrorMessage.style.display = 'block';
+                    return;
+                }
+
+                try {
+                    const { data, error } = await _supabase.auth.signUp({
+                        email: email,
+                        password: generatedPassword, 
+                    });
+
+                    if (error) {
+                        createUserErrorMessage.textContent = `Erro ao criar usuário: ${error.message}`;
+                        createUserErrorMessage.style.display = 'block';
+                    } else if (data.user) {
+                        alert(`Usuário ${data.user.email} criado com sucesso! Senha: ${generatedPassword}. Um e-mail de confirmação pode ter sido enviado, dependendo da configuração do Supabase Auth.`);
+                        createUserEmailInput.value = '';
+                    }
+                } catch (error) {
+                    console.error("Erro inesperado na criação de usuário:", error);
+                    createUserErrorMessage.textContent = `Erro inesperado: ${error.message}`;
+                    createUserErrorMessage.style.display = 'block';
+                }
+            }
+
+            // --- LÓGICA DE LISTAR LOGINS (AGORA CHAMANDO A EDGE FUNCTION) ---
+            async function showListarLoginsScreen() {
+                usersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Carregando usuários...</td></tr>';
+                listarLoginsMessage.style.display = 'none';
+
+                if (currentUser.email !== ADMIN_MASTER_EMAIL) {
+                    listarLoginsMessage.textContent = 'Você não tem permissão para visualizar esta tela.';
+                    listarLoginsMessage.style.display = 'block';
+                    usersTableBody.innerHTML = '';
+                    showScreen('listarLogins'); 
+                    return;
+                }
+
+                try {
+                    // Chamar a Edge Function 'list-users' para buscar os usuários
+                    const response = await fetch(`${SUPABASE_URL}/functions/v1/list-users`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // A chave anon pode ser usada para chamar a função,
+                            // pois a Edge Function internamente usa a service_role_key.
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}` 
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Erro ao chamar a função de listagem de usuários.');
+                    }
+
+                    const allUsers = await response.json();
+                    
+                    usersTableBody.innerHTML = '';
+                    if (allUsers.length === 0) {
+                        usersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Nenhum usuário encontrado.</td></tr>';
+                    } else {
+                        allUsers.forEach(user => {
+                            const row = usersTableBody.insertRow();
+                            row.innerHTML = `
+                                <td>${user.email || 'N/A'}</td>
+                                <td>${user.id || 'N/A'}</td>
+                                <td>${user.email_confirmed_at ? 'Confirmado' : 'Pendente'}</td>
+                                <td>${new Date(user.created_at).toLocaleDateString('pt-BR')}</td>
+                            `;
+                        });
+                    }
+                } catch (error) {
+                    console.error("Erro ao listar usuários:", error);
+                    listarLoginsMessage.textContent = `Erro ao carregar usuários: ${error.message}.`;
+                    listarLoginsMessage.style.display = 'block';
+                    usersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Erro ao carregar usuários.</td></tr>';
+                }
+                showScreen('listarLogins');
+            }
+
+            // --- LÓGICA DE ALTERAR SENHA (Sem alterações diretas) ---
+            async function handleChangePassword() {
+                changePasswordErrorMessage.style.display = 'none';
+                const currentPassword = currentPasswordInput.value.trim();
+                const newPassword = newPasswordInput.value.trim();
+                const confirmNewPassword = confirmNewPasswordInput.value.trim();
+
+                if (!currentPassword || !newPassword || !confirmNewPassword) {
+                    changePasswordErrorMessage.textContent = 'Por favor, preencha todos os campos.';
+                    changePasswordErrorMessage.style.display = 'block';
+                    return;
+                }
+                if (newPassword !== confirmNewPassword) {
+                    changePasswordErrorMessage.textContent = 'A nova senha e a confirmação não coincidem.';
+                    changePasswordErrorMessage.style.display = 'block';
+                    return;
+                }
+                if (newPassword.length < 6) {
+                    changePasswordErrorMessage.textContent = 'A nova senha deve ter pelo menos 6 caracteres.';
+                    changePasswordErrorMessage.style.display = 'block';
+                    return;
+                }
+
+                try {
+                    const { error: reauthError } = await _supabase.auth.signInWithPassword({
+                        email: currentUser.email,
+                        password: currentPassword
+                    });
+
+                    if (reauthError) {
+                        if (reauthError.message.includes('Invalid login credentials') || reauthError.message.includes('AuthApiError: Invalid login credentials')) {
+                             changePasswordErrorMessage.textContent = 'Senha atual incorreta.';
+                        } else {
+                            changePasswordErrorMessage.textContent = `Erro de reautenticação: ${reauthError.message}`;
+                        }
+                        changePasswordErrorMessage.style.display = 'block';
+                        return;
+                    }
+
+                    const { error: updateError } = await _supabase.auth.updateUser({
+                        password: newPassword
+                    });
+
+                    if (updateError) {
+                        changePasswordErrorMessage.textContent = `Erro ao alterar senha: ${updateError.message}`;
+                        changePasswordErrorMessage.style.display = 'block';
+                    } else {
+                        alert('Senha alterada com sucesso! Você será desconectado para logar com a nova senha.');
+                        await _supabase.auth.signOut(); 
+                        showScreen('login');
+                        currentPasswordInput.value = '';
+                        newPasswordInput.value = '';
+                        confirmNewPasswordInput.value = '';
+                    }
+                } catch (error) {
+                    console.error("Erro inesperado na alteração de senha:", error);
+                    changePasswordErrorMessage.textContent = `Erro inesperado: ${error.message}`;
+                    changePasswordErrorMessage.style.display = 'block';
+                }
+            }
+
+
+            // --- INICIALIZAÇÃO ---
+            async function initializeApp() {
+                loginButton.addEventListener('click', handleLogin);
+                logoutButton.addEventListener('click', handleLogout);
+                loginPasswordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
+                
+                // Colaboradores: Navegação e CRUD
+                // Botão "Colaboradores" do Dashboard agora vai para a tela de lista
+                btnGoToListarColaboradores.addEventListener('click', async () => {
+                    await fetchAndRenderColaboradores();
+                    showScreen('listarColaboradores');
+                });
+                // Botão "Adicionar Novo Colaborador" da tela de lista vai para o formulário
+                btnGoToAdicionarColaborador.addEventListener('click', () => {
+                    // Resetar formulário para adição
+                    colabNomeInput.value = '';
+                    colabFuncaoSelect.value = ''; 
+                    colabSetorSelect.value = ''; 
+                    colabPixInput.value = '';
+                    colabCpfInput.value = '';
+                    colabTelefoneInput.value = '';
+                    colabEnderecoInput.value = '';
+                    editingColaboradorId = null; // Garante modo adição
+                    colaboradorFormTitle.textContent = 'Adicionar Novo Colaborador';
+                    btnSalvarColaborador.textContent = 'Salvar Novo Colaborador';
+                    btnSalvarColaborador.classList.remove('btn-primary'); 
+                    btnSalvarColaborador.classList.add('btn-success');
+                    showScreen('adicionarColaborador');
+                });
+                // Botões de voltar
+                btnAdicionarColabVoltar.addEventListener('click', () => showScreen('listarColaboradores')); 
+                btnListarColabVoltar.addEventListener('click', () => showScreen('dashboard')); 
+                
+                btnSalvarColaborador.addEventListener('click', handleSalvarColaborador);
+                
+                // Lançamento de Diárias
+                btnGoToLancarDiaria.addEventListener('click', showLancarDiariasScreen);
+                btnDiariasVoltar.addEventListener('click', () => showScreen('dashboard'));
+                diariaColaboradorSelect.addEventListener('change', toggleDiariaFields);
+                diariaDobrouCheckbox.addEventListener('change', toggleDiariaFields);
+                btnSalvarDiaria.addEventListener('click', handleSalvarDiaria);
+                
+                // Relatórios
+                btnGoToRelatorios.addEventListener('click', showRelatoriosScreen);
+                btnRelatoriosVoltar.addEventListener('click', () => {
+                    resumoPagamentosDiv.style.display = 'none';
+                    resumoGastosDiv.style.display = 'none';
+                    showScreen('dashboard');
+                });
+                btnVerResumo.addEventListener('click', async () => {
+                    const dataInicio = relatorioDataInicioInput.value;
+                    const dataFim = relatorioDataFimInput.value;
+                    if (!dataInicio || !dataFim) {
+                        alert('Por favor, selecione as datas de início e fim para o relatório.');
+                        return;
+                    }
+                    const dados = await processarDadosRelatorio(dataInicio, dataFim);
+                    if (dados) {
+                        exibirResumoNaTela(dados);
+                    } else {
+                        resumoPagamentosDiv.style.display = 'none';
+                        resumoGastosDiv.style.display = 'none';
+                    }
+                });
+                btnGerarRelatorioPdf.addEventListener('click', gerarRelatorioPdf);
+                btnGerarRelatorioXlsx.addEventListener('click', gerarRelatorioXlsx);
+
+                // Criação de Login
+                btnGoToCriarLogin.addEventListener('click', () => {
+                    createUserEmailInput.value = '';
+                    generatedPasswordDisplay.value = ''; 
+                    createUserErrorMessage.style.display = 'none';
+                    showScreen('criarLogin');
+                });
+                btnCriarLoginVoltar.addEventListener('click', () => showScreen('dashboard'));
+                btnCreateUser.addEventListener('click', handleCreateUser);
+                createUserEmailInput.addEventListener('keypress', (e) => { 
+                    if (e.key === 'Enter') handleCreateUser(); 
+                });
+                
+                // Listar Logins
+                btnGoToListarLogins.addEventListener('click', showListarLoginsScreen);
+                btnListarLoginsVoltar.addEventListener('click', () => showScreen('dashboard'));
+
+                // Alterar Senha
+                btnGoToAlterarSenha.addEventListener('click', () => {
+                    currentPasswordInput.value = '';
+                    newPasswordInput.value = '';
+                    confirmNewPasswordInput.value = '';
+                    changePasswordErrorMessage.style.display = 'none';
+                    showScreen('alterarSenha');
+                });
+                btnAlterarSenhaVoltar.addEventListener('click', () => showScreen('dashboard'));
+                btnChangePassword.addEventListener('click', handleChangePassword);
+                confirmNewPasswordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') handleChangePassword();
+                });
+                
+                const { data: { session } } = await _supabase.auth.getSession();
+                if (session) { await setupDashboard(session.user); } 
+                else { showScreen('login'); }
+            }
+            initializeApp();
+        });
+    </script>
+</body>
+</html>
