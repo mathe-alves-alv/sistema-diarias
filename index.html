@@ -78,7 +78,7 @@
             margin-top: 0; 
             color: var(--color-primary); /* Títulos em cor primária */
             line-height: 1.2; 
-            font-weight: 600; /* Más peso */
+            font-weight: 600; /* Mais peso */
         }
         h1 { font-size: 2.2rem; margin-bottom: var(--spacing-unit); }
         h2 { font-size: 1.8rem; text-align: left; margin-bottom: calc(var(--spacing-unit) * 1.2); }
@@ -373,6 +373,71 @@
             }
         }
 
+        /* Estilos do Modal (para Edição de Diária) */
+        .modal {
+            display: none; /* Escondido por padrão */
+            position: fixed; /* Fica por cima de tudo */
+            z-index: 1000; /* Z-index alto para ficar na frente */
+            left: 0;
+            top: 0;
+            width: 100%; /* Largura total */
+            height: 100%; /* Altura total */
+            overflow: auto; /* Habilita scroll se conteúdo for muito grande */
+            background-color: rgba(0,0,0,0.4); /* Fundo semi-transparente */
+            display: flex; /* Para centralizar o conteúdo */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: var(--color-surface);
+            margin: auto;
+            padding: calc(var(--spacing-unit) * 2);
+            border-radius: var(--border-radius-soft);
+            box-shadow: var(--shadow-medium);
+            width: 90%;
+            max-width: 500px; /* Largura máxima para o modal */
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--color-background-medium);
+            padding-bottom: var(--spacing-unit);
+            margin-bottom: var(--spacing-unit);
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: var(--color-primary);
+            text-align: left; /* Títulos do modal alinhados à esquerda */
+            font-size: 1.5rem;
+        }
+        .close-button {
+            color: var(--color-text-muted);
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            margin-left: var(--spacing-unit); /* Espaçamento do título */
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: var(--color-primary);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end; /* Alinha botões à direita */
+            gap: var(--spacing-unit);
+            margin-top: calc(var(--spacing-unit) * 1.5);
+        }
     </style>
 </head>
 <body>
@@ -461,6 +526,26 @@
                             </svg>
                             <span>Alterar Senha</span>
                         </button>
+
+                        <button id="btnGoToGerenciarDiarias" class="admin-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-edit">
+                                <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                                <path d="M9.5 16.5 16 10l-3.5-3.5L7 13l2.5 3.5Z"/>
+                                <path d="M14.5 11.5 13 10"/>
+                            </svg>
+                            <span>Gerenciar Diárias</span>
+                        </button>
+
+                        <button id="btnGoToHistorico" class="admin-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-history">
+                                <path d="M3 3v5h5"/>
+                                <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/>
+                                <path d="M12 7v6h4"/>
+                            </svg>
+                            <span>Histórico</span>
+                        </button>
+
                     </div>
                 </div>
             </div>
@@ -503,6 +588,7 @@
                 </div> 
             </div> 
         </div>
+
         <div id="screenListarColaboradores" class="screen">
             <button id="btnListarColabVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
             <div class="card">
@@ -528,6 +614,7 @@
                 </div>
             </div>
         </div>
+
         <div id="screenLancarDiarias" class="screen">
              <button id="btnDiariasVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
              <div class="card">
@@ -657,6 +744,108 @@
             </div>
         </div>
 
+        <div id="screenGerenciarDiarias" class="screen">
+            <button id="btnGerenciarDiariasVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
+            <div class="card">
+                <h2>Gerenciar Diárias Lançadas</h2>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID Diária</th>
+                                <th>Data</th>
+                                <th>Colaborador</th>
+                                <th>Função</th>
+                                <th>Setor</th>
+                                <th>Valor</th>
+                                <th>Lançado Por</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gerenciarDiariasTableBody">
+                            <tr><td colspan="8" style="text-align: center; padding: 20px;">Carregando diárias...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="editDiariaModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Editar Diária</h2>
+                        <span class="close-button">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="editDiariaId">
+                        <div class="form-group"><label for="editDiariaColaboradorNome">Colaborador:</label><input type="text" id="editDiariaColaboradorNome" readonly></div>
+                        <div class="form-group"><label for="editDiariaData">Data da Diária:</label><input type="date" id="editDiariaData"></div>
+                        <div class="form-group">
+                            <label for="editDiariaFuncao">Função:</label>
+                            <select id="editDiariaFuncao">
+                                <option value="Garçom">Garçom</option>
+                                <option value="Cumim">Cumim</option>
+                                <option value="ASG">ASG</option>
+                                <option value="Recreação">Recreação</option>
+                                <option value="Recepção">Recepção</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editDiariaSetor">Setor:</label>
+                            <select id="editDiariaSetor">
+                                <option value="Cozinha">Cozinha</option>
+                                <option value="Salão">Salão</option>
+                                <option value="ADM">ADM</option>
+                                <option value="ASG">ASG</option>
+                                <option value="Recreação">Recreação</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editDiariaDobrou" style="display: inline-block; margin-right: 10px;">Dobrou o turno?</label>
+                            <input type="checkbox" id="editDiariaDobrou">
+                        </div>
+                        <div class="form-row" id="editDiariaHorasContainer">
+                            <div class="form-group">
+                                <label for="editDiariaHoraEntrada">Horário de Entrada:</label>
+                                <input type="time" id="editDiariaHoraEntrada">
+                            </div>
+                            <div class="form-group">
+                                <label for="editDiariaHoraSaida">Horário de Saída:</label>
+                                <input type="time" id="editDiariaHoraSaida">
+                            </div>
+                        </div>
+                        <div class="form-group"><label for="editDiariaValorPago">Valor Calculado:</label><input type="text" id="editDiariaValorPago" readonly></div>
+                    </div>
+                    <div class="modal-buttons">
+                        <button class="btn-secondary" id="cancelEditDiaria">Cancelar</button>
+                        <button class="btn-primary" id="saveEditDiaria">Salvar Alterações</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenHistorico" class="screen">
+            <button id="btnHistoricoVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
+            <div class="card">
+                <h2>Histórico de Diárias</h2>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Ação</th>
+                                <th>Diária ID</th>
+                                <th>Usuário</th>
+                                <th>Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historicoTableBody">
+                            <tr><td colspan="5" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -666,33 +855,37 @@
             const { createClient } = supabase;
             const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             let currentUser = null;
-            let colaboradoresCache = [];
-            let editingColaboradorId = null; // Para controlar edição de colaborador
-
+            let colaboradoresCache = []; // Cache de colaboradores para evitar múltiplas chamadas
+            let diariasCache = []; // Cache de diárias para edição/exclusão
+            
             const { jsPDF } = window.jspdf;
+            const XLSX = window.XLSX; // Garantir que XLSX está globalmente acessível
 
             // --- DOM SELECTORS ---
             const screens = {
                 login: document.getElementById('screenLogin'), 
                 dashboard: document.getElementById('screenDashboard'),
-                adicionarColaborador: document.getElementById('screenAdicionarColaborador'), /* Renomeado */
-                listarColaboradores: document.getElementById('screenListarColaboradores'), /* Nova tela */
+                adicionarColaborador: document.getElementById('screenAdicionarColaborador'), 
+                listarColaboradores: document.getElementById('screenListarColaboradores'), 
                 lancarDiarias: document.getElementById('screenLancarDiarias'),
                 relatorios: document.getElementById('screenRelatorios'),
                 criarLogin: document.getElementById('screenCriarLogin'),
                 listarLogins: document.getElementById('screenListarLogins'), 
-                alterarSenha: document.getElementById('screenAlterarSenha') 
+                alterarSenha: document.getElementById('screenAlterarSenha'),
+                gerenciarDiarias: document.getElementById('screenGerenciarDiarias'), // Nova tela
+                historico: document.getElementById('screenHistorico') // Nova tela
             };
+
             const loginEmailInput = document.getElementById('loginEmail'), loginPasswordInput = document.getElementById('loginPassword'), loginButton = document.getElementById('loginButton'), loginErrorMessage = document.getElementById('loginErrorMessage');
             const logoutButton = document.getElementById('logoutButton'), userEmailDisplay = document.getElementById('userEmailDisplay');
             const userMainPanel = document.getElementById('userMainPanel'); 
             
-            // Colaboradores: Renomeados e novos seletores
-            const btnGoToListarColaboradores = document.getElementById('btnGoToListarColaboradores'); /* Botão do dashboard */
-            const btnGoToAdicionarColaborador = document.getElementById('btnGoToAdicionarColaborador'); /* Botão da lista de colabs */
-            const btnAdicionarColabVoltar = document.getElementById('btnAdicionarColabVoltar'); /* Botão de voltar do form de add/edit */
-            const btnListarColabVoltar = document.getElementById('btnListarColabVoltar'); /* Botão de voltar da lista */
-            const colaboradorFormTitle = document.getElementById('colaboradorFormTitle'); /* Título do formulário */
+            // Colaboradores
+            const btnGoToListarColaboradores = document.getElementById('btnGoToListarColaboradores'); 
+            const btnGoToAdicionarColaborador = document.getElementById('btnGoToAdicionarColaborador'); 
+            const btnAdicionarColabVoltar = document.getElementById('btnAdicionarColabVoltar'); 
+            const btnListarColabVoltar = document.getElementById('btnListarColabVoltar'); 
+            const colaboradorFormTitle = document.getElementById('colaboradorFormTitle'); 
 
             const btnSalvarColaborador = document.getElementById('btnSalvarColaborador');
             const colabNomeInput = document.getElementById('colabNome');
@@ -702,23 +895,25 @@
             const colabCpfInput = document.getElementById('colabCpf'), colabTelefoneInput = document.getElementById('colabTelefone'), colabEnderecoInput = document.getElementById('colabEndereco');
             const colaboradoresTableBody = document.getElementById('colaboradoresTableBody');
             
+            // Lançar Diárias
             const btnGoToLancarDiaria = document.getElementById('btnGoToLancarDiaria'), btnDiariasVoltar = document.getElementById('btnDiariasVoltar'), btnSalvarDiaria = document.getElementById('btnSalvarDiaria');
             const diariaColaboradorSelect = document.getElementById('diariaColaborador'), diariaFuncaoInput = document.getElementById('diariaFuncao'), diariaSetorInput = document.getElementById('diariaSetor'), diariaDataInput = document.getElementById('diariaData'), diariaCamposDinamicos = document.getElementById('diariaCamposDinamicos'), diariaDobrouCheckbox = document.getElementById('diariaDobrou'), diariaHorasContainer = document.getElementById('diariaHorasContainer'), diariaHoraEntradaInput = document.getElementById('diariaHoraEntrada'), diariaHoraSaidaInput = document.getElementById('diariaHoraSaida');
             
-            // Relatórios: Novos seletores para resumo na tela e XLSX
+            // Relatórios
             const btnGoToRelatorios = document.getElementById('btnGoToRelatorios');
             const btnRelatoriosVoltar = document.getElementById('btnRelatoriosVoltar');
             const relatorioDataInicioInput = document.getElementById('relatorioDataInicio');
             const relatorioDataFimInput = document.getElementById('relatorioDataFim');
-            const btnVerResumo = document.getElementById('btnVerResumo'); /* Novo */
+            const btnVerResumo = document.getElementById('btnVerResumo'); 
             const btnGerarRelatorioPdf = document.getElementById('btnGerarRelatorioPdf');
-            const btnGerarRelatorioXlsx = document.getElementById('btnGerarRelatorioXlsx'); /* Novo */
-            const resumoPagamentosDiv = document.getElementById('resumoPagamentos'); /* Novo */
-            const resumoPagamentosBody = document.getElementById('resumoPagamentosBody'); /* Novo */
-            const resumoPagamentosTotal = document.getElementById('resumoPagamentosTotal'); /* Novo */
-            const resumoGastosDiv = document.getElementById('resumoGastos'); /* Novo */
-            const resumoGastosBody = document.getElementById('resumoGastosBody'); /* Novo */
+            const btnGerarRelatorioXlsx = document.getElementById('btnGerarRelatorioXlsx'); 
+            const resumoPagamentosDiv = document.getElementById('resumoPagamentos'); 
+            const resumoPagamentosBody = document.getElementById('resumoPagamentosBody'); 
+            const resumoPagamentosTotal = document.getElementById('resumoPagamentosTotal'); 
+            const resumoGastosDiv = document.getElementById('resumoGastos'); 
+            const resumoGastosBody = document.getElementById('resumoGastosBody'); 
 
+            // Criar Login
             const btnGoToCriarLogin = document.getElementById('btnGoToCriarLogin');
             const btnCriarLoginVoltar = document.getElementById('btnCriarLoginVoltar');
             const createUserEmailInput = document.getElementById('createUserEmail');
@@ -726,11 +921,13 @@
             const btnCreateUser = document.getElementById('btnCreateUser');
             const createUserErrorMessage = document.getElementById('createUserErrorMessage');
 
+            // Listar Logins
             const btnGoToListarLogins = document.getElementById('btnGoToListarLogins');
             const btnListarLoginsVoltar = document.getElementById('btnListarLoginsVoltar');
             const usersTableBody = document.getElementById('usersTableBody');
             const listarLoginsMessage = document.getElementById('listarLoginsMessage');
 
+            // Alterar Senha
             const btnGoToAlterarSenha = document.getElementById('btnGoToAlterarSenha');
             const btnAlterarSenhaVoltar = document.getElementById('btnAlterarSenhaVoltar');
             const currentPasswordInput = document.getElementById('currentPassword');
@@ -738,6 +935,33 @@
             const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
             const btnChangePassword = document.getElementById('btnChangePassword');
             const changePasswordErrorMessage = document.getElementById('changePasswordErrorMessage');
+
+            // Gerenciar Diárias (Novos seletores)
+            const btnGoToGerenciarDiarias = document.getElementById('btnGoToGerenciarDiarias');
+            const btnGerenciarDiariasVoltar = document.getElementById('btnGerenciarDiariasVoltar');
+            const gerenciarDiariasTableBody = document.getElementById('gerenciarDiariasTableBody');
+
+            // Modal de Edição de Diária
+            const editDiariaModal = document.getElementById('editDiariaModal');
+            const closeEditModalButton = editDiariaModal.querySelector('.close-button');
+            const cancelEditDiariaButton = document.getElementById('cancelEditDiaria');
+            const saveEditDiariaButton = document.getElementById('saveEditDiaria');
+            const editDiariaIdInput = document.getElementById('editDiariaId');
+            const editDiariaColaboradorNomeInput = document.getElementById('editDiariaColaboradorNome');
+            const editDiariaDataInput = document.getElementById('editDiariaData');
+            const editDiariaFuncaoSelect = document.getElementById('editDiariaFuncao');
+            const editDiariaSetorSelect = document.getElementById('editDiariaSetor');
+            const editDiariaDobrouCheckbox = document.getElementById('editDiariaDobrou');
+            const editDiariaHorasContainer = document.getElementById('editDiariaHorasContainer');
+            const editDiariaHoraEntradaInput = document.getElementById('editDiariaHoraEntrada');
+            const editDiariaHoraSaidaInput = document.getElementById('editDiariaHoraSaida');
+            const editDiariaValorPagoInput = document.getElementById('editDiariaValorPago');
+
+            // Histórico (Novos seletores)
+            const btnGoToHistorico = document.getElementById('btnGoToHistorico');
+            const btnHistoricoVoltar = document.getElementById('btnHistoricoVoltar');
+            const historicoTableBody = document.getElementById('historicoTableBody');
+
 
             // <<< IMPORTANTE: SUBSTITUA matheus@holysalt.com PELO SEU EMAIL DE ADMINISTRADOR MASTER REAL >>>
             const ADMIN_MASTER_EMAIL = 'matheus@holysalt.com'; 
@@ -778,9 +1002,13 @@
                 if (user.email === ADMIN_MASTER_EMAIL) { 
                     btnGoToCriarLogin.style.display = 'flex'; 
                     btnGoToListarLogins.style.display = 'flex';
+                    btnGoToGerenciarDiarias.style.display = 'flex'; // Mostra botão para Admin
+                    btnGoToHistorico.style.display = 'flex'; // Mostra botão para Admin
                 } else {
                     btnGoToCriarLogin.style.display = 'none';
                     btnGoToListarLogins.style.display = 'none';
+                    btnGoToGerenciarDiarias.style.display = 'none'; // Esconde para outros usuários
+                    btnGoToHistorico.style.display = 'none'; // Esconde para outros usuários
                 }
                 btnGoToAlterarSenha.style.display = 'flex'; 
 
@@ -954,7 +1182,7 @@
                 showScreen('adicionarColaborador'); // Vai para a tela de formulário
             }
 
-            // --- LANÇAMENTO DE DIÁRIAS - LÓGICA (Sem alterações diretas) ---
+            // --- LANÇAMENTO DE DIÁRIAS - LÓGICA ---
             async function showLancarDiariasScreen() {
                 const { data, error } = await _supabase.from('colaboradores').select('id, nome_completo, funcao, setor').eq('ativo', true).order('nome_completo');
                 if(error) { console.error(error); alert("Erro ao carregar colaboradores."); return; }
@@ -973,26 +1201,38 @@
                 showScreen('lancarDiarias');
             }
 
-            function toggleDiariaFields() {
-                const selectedColabId = diariaColaboradorSelect.value;
+            function toggleDiariaFields(isEditContext = false) {
+                const selectedColabId = isEditContext ? editDiariaColaboradorNomeInput.dataset.colabId : diariaColaboradorSelect.value;
                 const colaborador = colaboradoresCache.find(c => c.id == selectedColabId);
                 
+                const currentDiariaFuncaoInput = isEditContext ? editDiariaFuncaoSelect : diariaFuncaoInput;
+                const currentDiariaSetorInput = isEditContext ? editDiariaSetorSelect : diariaSetorInput;
+                const currentDiariaCamposDinamicos = isEditContext ? editDiariaDobrouCheckbox : diariaCamposDinamicos;
+                const currentDiariaHorasContainer = isEditContext ? editDiariaHorasContainer : diariaHorasContainer;
+                const currentDiariaDobrouCheckbox = isEditContext ? editDiariaDobrouCheckbox : diariaDobrouCheckbox;
+
+
                 if (!colaborador) {
-                    diariaCamposDinamicos.style.display = 'none';
-                    diariaFuncaoInput.value = '';
-                    diariaSetorInput.value = '';
+                    currentDiariaCamposDinamicos.style.display = 'none'; // Esconde para a edição também
+                    currentDiariaFuncaoInput.value = '';
+                    currentDiariaSetorInput.value = '';
                     return;
                 }
 
-                diariaFuncaoInput.value = colaborador.funcao || '---';
-                diariaSetorInput.value = colaborador.setor || '---';
+                currentDiariaFuncaoInput.value = colaborador.funcao || '---';
+                currentDiariaSetorInput.value = colaborador.setor || '---';
                 
                 const funcao = colaborador.funcao.toLowerCase();
                 if (['cumim', 'asg', 'recepção', 'recepcao'].some(f => funcao.includes(f))) {
-                    diariaCamposDinamicos.style.display = 'block';
-                    diariaHorasContainer.style.display = diariaDobrouCheckbox.checked ? 'none' : 'flex';
+                    currentDiariaCamposDinamicos.style.display = 'block';
+                    currentDiariaHorasContainer.style.display = currentDiariaDobrouCheckbox.checked ? 'none' : 'flex';
                 } else {
-                    diariaCamposDinamicos.style.display = 'none';
+                    currentDiariaCamposDinamicos.style.display = 'none';
+                }
+
+                // Recalcular o valor em tempo real para edição
+                if (isEditContext) {
+                    calculateAndSetDiariaValue(true);
                 }
             }
             
@@ -1170,35 +1410,6 @@
                 };
             }
 
-            // Função para exibir o resumo na tela
-            function exibirResumoNaTela(dadosProcessados) {
-                const { pagamentos, gastos, totalGeral, periodo } = dadosProcessados;
-
-                // Limpa e exibe a seção de pagamentos
-                resumoPagamentosBody.innerHTML = '';
-                pagamentos.forEach(item => {
-                    const row = resumoPagamentosBody.insertRow();
-                    row.innerHTML = `
-                        <td class="text-left">${item.nome}</td>
-                        <td class="text-left">${item.pix}</td>
-                        <td class="text-right">R$ ${item.total.toFixed(2)}</td>
-                    `;
-                });
-                resumoPagamentosTotal.textContent = `R$ ${totalGeral.toFixed(2)}`;
-                resumoPagamentosDiv.style.display = 'block';
-
-                // Limpa e exibe a seção de gastos
-                resumoGastosBody.innerHTML = '';
-                gastos.forEach(item => {
-                    const row = resumoGastosBody.insertRow();
-                    row.innerHTML = `
-                        <td class="text-left">${item.setor}</td>
-                        <td class="text-right">R$ ${item.total.toFixed(2)}</td>
-                    `;
-                });
-                resumoGastosDiv.style.display = 'block';
-            }
-
             // Função para gerar PDF (melhorada com a função de processamento)
             async function gerarRelatorioPdf() {
                 const dataInicio = relatorioDataInicioInput.value;
@@ -1221,6 +1432,7 @@
                 // --- Geração do PDF ---
                 const doc = new jsPDF();
                 const defaultMargin = 15; 
+                const usableWidth = doc.internal.pageSize.getWidth() - (defaultMargin * 2); // Largura útil da página
                 
                 // Posição X para os títulos das seções (alinha com a margem esquerda da tabela)
                 const sectionTitleX = defaultMargin; 
@@ -1276,10 +1488,11 @@
                     bodyStyles: { textColor: [33, 37, 41] },
                     alternateRowStyles: { fillColor: [248, 249, 250] },
                     margin: { horizontal: defaultMargin }, 
+                    // Definindo larguras das colunas para melhor alinhamento
                     columnStyles: {
-                        0: { halign: 'left', columnWidth: 'auto' }, // 'Nome Completo' alinhado à esquerda
-                        1: { halign: 'left', columnWidth: 'auto' }, // 'Chave PIX' alinhado à esquerda
-                        2: { halign: 'right', columnWidth: 35 } // 'Valor Total' alinhado à direita e com largura fixa
+                        0: { halign: 'left', columnWidth: (usableWidth * 0.38) }, // ~38%
+                        1: { halign: 'left', columnWidth: (usableWidth * 0.32) }, // ~32%
+                        2: { halign: 'right', columnWidth: (usableWidth * 0.30) } // ~30%
                     },
                     didParseCell: function(data) {
                         // Força o alinhamento à esquerda para o cabeçalho da primeira coluna
@@ -1324,9 +1537,10 @@
                     bodyStyles: { textColor: [33, 37, 41] },
                     alternateRowStyles: { fillColor: [248, 249, 250] },
                     margin: { horizontal: defaultMargin }, 
+                    // Definindo larguras das colunas para melhor alinhamento
                     columnStyles: {
-                        0: { halign: 'left', columnWidth: 'auto' }, // 'Setor' alinhado à esquerda
-                        1: { halign: 'right', columnWidth: 35 } // 'Valor Total' alinhado à direita e com largura fixa
+                        0: { halign: 'left', columnWidth: (usableWidth * 0.70) }, // 70% para Setor
+                        1: { halign: 'right', columnWidth: (usableWidth * 0.30) } // 30% para Valor Total
                     },
                     foot: [['TOTAL GERAL', `R$ ${totalGeral.toFixed(2)}`]], 
                     footStyles: {
@@ -1574,39 +1788,334 @@
             }
 
 
-            // --- INICIALIZAÇÃO ---
+            // --- NOVAS FUNCIONALIDADES: GERENCIAR DIÁRIAS E HISTÓRICO ---
+
+            // Função de cálculo de valor da diária (reutilizada para edição)
+            function calculateAndSetDiariaValue(isEditContext = false) {
+                const currentDiariaFuncaoInput = isEditContext ? editDiariaFuncaoSelect : diariaFuncaoInput;
+                const currentDiariaDobrouCheckbox = isEditContext ? editDiariaDobrouCheckbox : diariaDobrouCheckbox;
+                const currentDiariaHoraEntradaInput = isEditContext ? editDiariaHoraEntradaInput : diariaHoraEntradaInput;
+                const currentDiariaHoraSaidaInput = isEditContext ? editDiariaHoraSaidaInput : diariaHoraSaidaInput;
+                const currentDiariaValorPagoInput = isEditContext ? editDiariaValorPagoInput : null; // Só para tela de edição
+
+                const funcao = currentDiariaFuncaoInput.value.toLowerCase();
+                const dobrou = currentDiariaDobrouCheckbox.checked;
+                const horaEntrada = currentDiariaHoraEntradaInput.value;
+                const horaSaida = currentDiariaHoraSaidaInput.value;
+                
+                let valorCalculado = 0;
+                let horasTrabalhadas = 0;
+
+                // Regras de cálculo (mesmas do handleSalvarDiaria)
+                if (funcao.includes('garçom')) {
+                    valorCalculado = 50;
+                } else if (funcao.includes('recreação') || funcao.includes('recreacao')) {
+                    valorCalculado = 110;
+                } else if (['cumim', 'asg', 'recepção', 'recepcao'].some(f => funcao.includes(f))) {
+                    // Para cálculo no frontend, usamos uma data fictícia para o dia da semana
+                    const dataFicticia = '2025-07-01'; // Usar uma data arbitrária (ex: 30/06/2025)
+                    const dataObj = new Date(dataFicticia + 'T00:00:00'); 
+                    const diaDaSemana = dataObj.getDay(); 
+                    const isWeekend = (diaDaSemana === 6 || diaDaSemana === 0); 
+
+                    if (dobrou) {
+                        valorCalculado = isWeekend ? 180 : 160;
+                        horasTrabalhadas = 16;
+                    } else {
+                        if (horaEntrada && horaSaida) {
+                            const entradaMS = new Date(`1970-01-01T${horaEntrada}:00`).getTime();
+                            const saidaMS = new Date(`1970-01-01T${horaSaida}:00`).getTime();
+                            
+                            if (saidaMS < entradaMS) { // Virada de dia
+                                horasTrabalhadas = ((24 * 60 * 60 * 1000) - entradaMS + saidaMS) / (1000 * 60 * 60);
+                            } else {
+                                horasTrabalhadas = (saidaMS - entradaMS) / (1000 * 60 * 60);
+                            }
+                        }
+                        const basePay = isWeekend ? 90 : 80;
+                        const baseHours = 8;
+                        valorCalculado = (horasTrabalhadas <= baseHours) ? basePay : basePay + ((horasTrabalhadas - baseHours) * 10);
+                    }
+                }
+                
+                if (currentDiariaValorPagoInput) {
+                    currentDiariaValorPagoInput.value = `R$ ${valorCalculado.toFixed(2)}`;
+                }
+                return parseFloat(valorCalculado.toFixed(2));
+            }
+
+
+            // --- Gerenciar Diárias (screenGerenciarDiarias) ---
+            async function showGerenciarDiariasScreen() {
+                gerenciarDiariasTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Carregando diárias...</td></tr>';
+                showScreen('gerenciarDiarias');
+
+                const { data, error } = await _supabase
+                    .from('diarias_lancadas')
+                    .select(`
+                        id,
+                        data_diaria,
+                        valor_pago,
+                        dobrou,
+                        horas_trabalhadas,
+                        horario_entrada,
+                        horario_saida,
+                        funcao_colaborador,
+                        setor_colaborador,
+                        colaboradores(nome_completo),
+                        perfis(email, nome_completo) /* Para saber quem lançou/editou */
+                    `)
+                    .order('data_diaria', { ascending: false });
+
+                if (error) {
+                    console.error("Erro ao buscar diárias para gerenciamento:", error);
+                    gerenciarDiariasTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Erro ao carregar diárias.</td></tr>';
+                    return;
+                }
+                diariasCache = data; // Armazena as diárias para acesso rápido na edição
+
+                gerenciarDiariasTableBody.innerHTML = '';
+                if (diariasCache.length === 0) {
+                    gerenciarDiariasTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Nenhuma diária lançada.</td></tr>';
+                    return;
+                }
+
+                diariasCache.forEach(diaria => {
+                    const row = gerenciarDiariasTableBody.insertRow();
+                    const colaboradorNome = diaria.colaboradores?.nome_completo || 'Desconhecido';
+                    const lancadoPor = diaria.perfis?.nome_completo || diaria.perfis?.email || 'N/A';
+                    
+                    row.innerHTML = `
+                        <td>${diaria.id.substring(0, 8)}...</td>
+                        <td>${new Date(diaria.data_diaria + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                        <td>${colaboradorNome}</td>
+                        <td>${diaria.funcao_colaborador}</td>
+                        <td>${diaria.setor_colaborador}</td>
+                        <td>R$ ${diaria.valor_pago.toFixed(2)}</td>
+                        <td>${lancadoPor}</td>
+                        <td>
+                            <button class="btn-secondary btn-sm" data-action="edit-diaria" data-id="${diaria.id}" style="padding: 5px 10px; font-size: 0.8rem;">Editar</button>
+                            <button class="btn-danger btn-sm" data-action="delete-diaria" data-id="${diaria.id}" style="padding: 5px 10px; font-size: 0.8rem;">Excluir</button>
+                        </td>
+                    `;
+                });
+
+                // Adiciona listeners para os botões de ação
+                gerenciarDiariasTableBody.querySelectorAll('button[data-action="edit-diaria"]').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        handleEditDiaria(id);
+                    });
+                });
+                gerenciarDiariasTableBody.querySelectorAll('button[data-action="delete-diaria"]').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        handleDeleteDiaria(id);
+                    });
+                });
+            }
+
+            // --- Gerenciar Diárias: Lógica de Edição ---
+            async function handleEditDiaria(diariaId) {
+                const diaria = diariasCache.find(d => d.id === diariaId);
+                if (!diaria) {
+                    alert('Diária não encontrada para edição.');
+                    return;
+                }
+
+                editDiariaIdInput.value = diaria.id;
+                editDiariaColaboradorNomeInput.value = diaria.colaboradores?.nome_completo || 'Desconhecido';
+                editDiariaColaboradorNomeInput.dataset.colabId = diaria.colaborador_id; // Armazena o ID do colab para cálculo
+                editDiariaDataInput.value = diaria.data_diaria;
+                editDiariaFuncaoSelect.value = diaria.funcao_colaborador;
+                editDiariaSetorSelect.value = diaria.setor_colaborador;
+                editDiariaDobrouCheckbox.checked = diaria.dobrou;
+                editDiariaHoraEntradaInput.value = diaria.horario_entrada || '';
+                editDiariaHoraSaidaInput.value = diaria.horario_saida || '';
+                editDiariaValorPagoInput.value = `R$ ${diaria.valor_pago.toFixed(2)}`;
+
+                // Ajustar visibilidade dos campos de horas na edição
+                toggleDiariaFields(true); // true para contexto de edição
+
+                editDiariaModal.style.display = 'flex'; // Exibe o modal
+            }
+
+            // Lógica para calcular e atualizar o valor no modal de edição
+            editDiariaFuncaoSelect.addEventListener('change', () => calculateAndSetDiariaValue(true));
+            editDiariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(true));
+            editDiariaHoraEntradaInput.addEventListener('change', () => calculateAndSetDiariaValue(true));
+            editDiariaHoraSaidaInput.addEventListener('change', () => calculateAndSetDiariaValue(true));
+
+
+            async function handleSaveEditDiaria() {
+                const diariaId = editDiariaIdInput.value;
+                const dataDiaria = editDiariaDataInput.value;
+                const funcaoColaborador = editDiariaFuncaoSelect.value;
+                const setorColaborador = editDiariaSetorSelect.value;
+                const dobrou = editDiariaDobrouCheckbox.checked;
+                const horarioEntrada = editDiariaHoraEntradaInput.value;
+                const horarioSaida = editDiariaHoraSaidaInput.value;
+
+                // Recalcular o valor com base nos novos dados
+                const valorPago = calculateAndSetDiariaValue(true);
+                let horasTrabalhadas = null; // Re-calculate hours if applicable
+                
+                // Recalcular horas trabalhadas com base na nova função/dobrou/horários
+                const funcao = funcaoColaborador.toLowerCase();
+                if (['cumim', 'asg', 'recepção', 'recepcao'].some(f => funcao.includes(f))) {
+                    if (dobrou) {
+                        horasTrabalhadas = 16;
+                    } else if (horarioEntrada && horarioSaida) {
+                        const entradaMS = new Date(`1970-01-01T${horarioEntrada}:00`).getTime();
+                        const saidaMS = new Date(`1970-01-01T${horarioSaida}:00`).getTime();
+                        if (saidaMS < entradaMS) {
+                            horasTrabalhadas = ((24 * 60 * 60 * 1000) - entradaMS + saidaMS) / (1000 * 60 * 60);
+                        } else {
+                            horasTrabalhadas = (saidaMS - entradaMS) / (1000 * 60 * 60);
+                        }
+                    }
+                }
+
+                const updatedFields = {
+                    data_diaria: dataDiaria,
+                    valor_pago: valorPago,
+                    dobrou: dobrou,
+                    horas_trabalhadas: horasTrabalhadas ? parseFloat(horasTrabalhadas.toFixed(2)) : null,
+                    horario_entrada: horarioEntrada || null,
+                    horario_saida: horarioSaida || null,
+                    funcao_colaborador: funcaoColaborador,
+                    setor_colaborador: setorColaborador
+                };
+
+                const { error } = await _supabase
+                    .from('diarias_lancadas')
+                    .update(updatedFields)
+                    .eq('id', diariaId);
+
+                if (error) {
+                    alert(`Erro ao atualizar diária: ${error.message}`);
+                    console.error("Erro na atualização da diária:", error);
+                } else {
+                    alert('Diária atualizada com sucesso!');
+                    editDiariaModal.style.display = 'none'; // Esconde o modal
+                    showGerenciarDiariasScreen(); // Recarrega a lista de diárias
+                }
+            }
+
+            // --- Gerenciar Diárias: Lógica de Exclusão ---
+            async function handleDeleteDiaria(diariaId) {
+                if (!confirm('Tem certeza que deseja excluir esta diária? Esta ação não pode ser desfeita.')) {
+                    return;
+                }
+
+                const { error } = await _supabase
+                    .from('diarias_lancadas')
+                    .delete()
+                    .eq('id', diariaId);
+
+                if (error) {
+                    alert(`Erro ao excluir diária: ${error.message}`);
+                    console.error("Erro na exclusão da diária:", error);
+                } else {
+                    alert('Diária excluída com sucesso!');
+                    showGerenciarDiariasScreen(); // Recarrega a lista
+                }
+            }
+
+            // --- Histórico (screenHistorico) ---
+            async function showHistoricoScreen() {
+                historicoTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>';
+                showScreen('historico');
+
+                // Busca o histórico e faz join com perfis para obter o nome/email do usuário
+                const { data, error } = await _supabase
+                    .from('diaria_historico')
+                    .select(`
+                        id,
+                        diaria_id,
+                        user_id,
+                        user_email,
+                        action,
+                        old_data,
+                        new_data,
+                        timestamp
+                    `)
+                    .order('timestamp', { ascending: false });
+
+                if (error) {
+                    console.error("Erro ao buscar histórico:", error);
+                    historicoTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Erro ao carregar histórico.</td></tr>';
+                    return;
+                }
+
+                historicoTableBody.innerHTML = '';
+                if (data.length === 0) {
+                    historicoTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Nenhum registro no histórico.</td></tr>';
+                    return;
+                }
+
+                data.forEach(record => {
+                    const row = historicoTableBody.insertRow();
+                    const recordDate = new Date(record.timestamp).toLocaleString('pt-BR');
+                    const actionDetails = formatHistoryDetails(record.action, record.old_data, record.new_data);
+                    
+                    row.innerHTML = `
+                        <td>${recordDate}</td>
+                        <td>${record.action.toUpperCase()}</td>
+                        <td>${record.diaria_id ? record.diaria_id.substring(0, 8) + '...' : 'N/A'}</td>
+                        <td>${record.user_email || 'Desconhecido'}</td>
+                        <td>${actionDetails}</td>
+                    `;
+                });
+            }
+
+            // Função auxiliar para formatar detalhes do histórico
+            function formatHistoryDetails(action, oldData, newData) {
+                switch (action) {
+                    case 'created':
+                        return `Diária de ${newData?.colaboradores?.nome_completo || newData?.funcao_colaborador || 'colaborador'} (R$ ${newData?.valor_pago?.toFixed(2)}) criada.`;
+                    case 'updated':
+                        let details = `Diária de ${oldData?.colaboradores?.nome_completo || oldData?.funcao_colaborador || 'colaborador'} alterada. `;
+                        // Comparar campos para mostrar o que mudou (simplificado)
+                        if (oldData?.valor_pago !== newData?.valor_pago) {
+                            details += `Valor: R$ ${oldData?.valor_pago?.toFixed(2)} -> R$ ${newData?.valor_pago?.toFixed(2)}. `;
+                        }
+                        if (oldData?.funcao_colaborador !== newData?.funcao_colaborador) {
+                            details += `Função: ${oldData?.funcao_colaborador} -> ${newData?.funcao_colaborador}. `;
+                        }
+                        return details.trim();
+                    case 'deleted':
+                        return `Diária de ${oldData?.colaboradores?.nome_completo || oldData?.funcao_colaborador || 'colaborador'} (R$ ${oldData?.valor_pago?.toFixed(2)}) excluída.`;
+                    default:
+                        return JSON.stringify(newData || oldData || {});
+                }
+            }
+
+
+            // --- INICIALIZAÇÃO E LISTENERS ---
             async function initializeApp() {
+                // Login
                 loginButton.addEventListener('click', handleLogin);
                 logoutButton.addEventListener('click', handleLogout);
                 loginPasswordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
                 
-                // Colaboradores: Navegação e CRUD
-                // Botão "Colaboradores" do Dashboard agora vai para a tela de lista
+                // Colaboradores
                 btnGoToListarColaboradores.addEventListener('click', async () => {
                     await fetchAndRenderColaboradores();
                     showScreen('listarColaboradores');
                 });
-                // Botão "Adicionar Novo Colaborador" da tela de lista vai para o formulário
                 btnGoToAdicionarColaborador.addEventListener('click', () => {
-                    // Resetar formulário para adição
-                    colabNomeInput.value = '';
-                    colabFuncaoSelect.value = ''; 
-                    colabSetorSelect.value = ''; 
-                    colabPixInput.value = '';
-                    colabCpfInput.value = '';
-                    colabTelefoneInput.value = '';
-                    colabEnderecoInput.value = '';
-                    editingColaboradorId = null; // Garante modo adição
+                    colabNomeInput.value = ''; colabFuncaoSelect.value = ''; colabSetorSelect.value = ''; 
+                    colabPixInput.value = ''; colabCpfInput.value = ''; colabTelefoneInput.value = ''; colabEnderecoInput.value = '';
+                    editingColaboradorId = null; 
                     colaboradorFormTitle.textContent = 'Adicionar Novo Colaborador';
                     btnSalvarColaborador.textContent = 'Salvar Novo Colaborador';
                     btnSalvarColaborador.classList.remove('btn-primary'); 
                     btnSalvarColaborador.classList.add('btn-success');
                     showScreen('adicionarColaborador');
                 });
-                // Botões de voltar
                 btnAdicionarColabVoltar.addEventListener('click', () => showScreen('listarColaboradores')); 
                 btnListarColabVoltar.addEventListener('click', () => showScreen('dashboard')); 
-                
                 btnSalvarColaborador.addEventListener('click', handleSalvarColaborador);
                 
                 // Lançamento de Diárias
@@ -1671,7 +2180,26 @@
                 confirmNewPasswordInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') handleChangePassword();
                 });
+
+                // Gerenciar Diárias (Novas funcionalidades)
+                btnGoToGerenciarDiarias.addEventListener('click', showGerenciarDiariasScreen);
+                btnGerenciarDiariasVoltar.addEventListener('click', () => showScreen('dashboard'));
+                // Listeners do Modal de Edição
+                closeEditModalButton.addEventListener('click', () => editDiariaModal.style.display = 'none');
+                cancelEditDiariaButton.addEventListener('click', () => editDiariaModal.style.display = 'none');
+                saveEditDiariaButton.addEventListener('click', handleSaveEditDiaria);
+                // Fechar modal ao clicar fora
+                window.addEventListener('click', (event) => {
+                    if (event.target == editDiariaModal) {
+                        editDiariaModal.style.display = 'none';
+                    }
+                });
+
+                // Histórico (Nova funcionalidade)
+                btnGoToHistorico.addEventListener('click', showHistoricoScreen);
+                btnHistoricoVoltar.addEventListener('click', () => showScreen('dashboard'));
                 
+                // Inicialização da sessão
                 const { data: { session } } = await _supabase.auth.getSession();
                 if (session) { await setupDashboard(session.user); } 
                 else { showScreen('login'); }
