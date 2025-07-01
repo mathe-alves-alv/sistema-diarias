@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -852,7 +853,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // NOVAS CREDENCIAIS AQUI!
+            // SUAS NOVAS CREDENCIAIS E ID DE ADMIN AQUI!
             const SUPABASE_URL = 'https://pbgnhcwspgvqcwlbbxle.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZ25oY3dzcGd2cWN3bGJieGxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNTQwNjksImV4cCI6MjA2NjkzMDA2OX0.9wOVZGObGwmL5T1qLkxOA2Ktm9TmW-zBPQnyn94vYSo';
             const { createClient } = supabase;
@@ -968,9 +969,9 @@
             const historicoTableBody = document.getElementById('historicoTableBody');
 
 
-            // SEU NOVO ID DE ADMIN AQUI!
+            // SUAS NOVAS CREDENCIAIS E ID DE ADMIN AQUI!
             const ADMIN_MASTER_EMAIL = 'matheus@holysalt.com'; 
-            const ADMIN_USER_ID = 'a37a896b-0b5a-4b87-b8be-3358249a84ee'; // NOVO ID DO SEU ADMINISTRADOR
+            const ADMIN_USER_ID = 'a37a896b-0b5a-4b87-b8be-3358249a84ee'; // SEU NOVO ID DE ADMINISTRADOR
 
             // --- CORE FUNCTIONS ---
             function showScreen(screenId) {
@@ -1588,7 +1589,6 @@
                     bodyStyles: { textColor: [33, 37, 41] },
                     alternateRowStyles: { fillColor: [248, 249, 250] },
                     margin: { horizontal: defaultMargin }, 
-                    // Definindo larguras das colunas para melhor alinhamento
                     columnStyles: {
                         0: { halign: 'left', columnWidth: (usableWidth * 0.70) }, // 70% para Setor
                         1: { halign: 'right', columnWidth: (usableWidth * 0.30) } // 30% para Valor Total
@@ -1746,11 +1746,11 @@
                 try {
                     // Consultar a nova tabela 'perfis'
                     const { data: allUsers, error: allUsersError } = await _supabase
-                        .from('perfis') // MUDANÇA AQUI: AGORA CONSULTA 'perfis'
-                        .select('id, email, created_at, nome_completo'); // Ajuste os campos que você quer
+                        .from('perfis') 
+                        .select('id, email, created_at, nome_completo'); 
 
                     if (allUsersError) {
-                        console.error("Erro ao buscar usuários (tabela perfis):", allUsersError.message || allUsersError.details || allUsersError); // Log detalhado
+                        console.error("Erro ao buscar usuários (tabela perfis):", allUsersError.message || allUsersError.details || allUsersError); 
                         listarLoginsMessage.textContent = `Erro ao carregar usuários: ${allUsersError.message || 'Detalhes no console.'}.`;
                         listarLoginsMessage.style.display = 'block';
                         usersTableBody.innerHTML = '<tr><td colspan="1" style="text-align: center; padding: 20px;">Erro ao carregar usuários.</td></tr>';
@@ -1901,6 +1901,7 @@
                 gerenciarDiariasTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Carregando diárias...</td></tr>';
                 showScreen('gerenciarDiarias');
 
+                // AQUI FOI O ERRO DE RELACIONAMENTO, AGORA CONSULTAMOS APENAS AS COLUNAS DIRETAS OU VIA FK Simples
                 const { data, error } = await _supabase
                     .from('diarias_lancadas')
                     .select(`
@@ -1913,13 +1914,12 @@
                         horario_saida,
                         funcao_colaborador,
                         setor_colaborador,
-                        colaboradores(nome_completo),
-                        perfis!inner(email, nome_completo) 
+                        colaborador_id, /* Incluímos o colaborador_id para lookup manual */
+                        user_id         /* Incluímos o user_id para lookup manual */
                     `)
                     .order('data_diaria', { ascending: false });
 
                 if (error) {
-                    // LOG DE ERRO MELHORADO:
                     console.error("Erro ao buscar diárias para gerenciamento:", error.message || error.details || error); 
                     gerenciarDiariasTableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px;">Erro ao carregar diárias: ${error.message || 'Verifique o console para detalhes.'}</td></tr>`;
                     return;
@@ -1932,10 +1932,20 @@
                     return;
                 }
 
+                // Carregar nomes de colaboradores e perfis para exibição
+                const { data: colabsData, error: colabsError } = await _supabase.from('colaboradores').select('id, nome_completo');
+                if (colabsError) { console.error("Erro ao buscar nomes de colaboradores:", colabsError); return; }
+                const colabsMap = new Map(colabsData.map(c => [c.id, c.nome_completo]));
+
+                const { data: perfisData, error: perfisError } = await _supabase.from('perfis').select('id, email, nome_completo');
+                if (perfisError) { console.error("Erro ao buscar nomes/emails de perfis:", perfisError); return; }
+                const perfisMap = new Map(perfisData.map(p => [p.id, p.nome_completo || p.email]));
+
+
                 diariasCache.forEach(diaria => {
                     const row = gerenciarDiariasTableBody.insertRow();
-                    const colaboradorNome = diaria.colaboradores?.nome_completo || 'Desconhecido';
-                    const lancadoPor = diaria.perfis?.nome_completo || diaria.perfis?.email || 'N/A'; 
+                    const colaboradorNome = colabsMap.get(diaria.colaborador_id) || 'Desconhecido'; // Lookup manual
+                    const lancadoPor = perfisMap.get(diaria.user_id) || 'N/A'; // Lookup manual
                     
                     row.innerHTML = `
                         <td>${diaria.id.substring(0, 8)}...</td>
@@ -1976,8 +1986,11 @@
                 }
 
                 editDiariaIdInput.value = diaria.id;
-                editDiariaColaboradorNomeInput.value = diaria.colaboradores?.nome_completo || 'Desconhecido';
-                editDiariaColaboradorNomeInput.dataset.colabId = diaria.colaborador_id; // Armazena o ID do colab para cálculo
+                // Busca o nome do colaborador a partir do cache de colaboradores
+                const colaboradorEdit = colaboradoresCache.find(c => c.id === diaria.colaborador_id);
+                editDiariaColaboradorNomeInput.value = colaboradorEdit?.nome_completo || 'Desconhecido';
+                editDiariaColaboradorNomeInput.dataset.colabId = diaria.colaborador_id; 
+
                 editDiariaDataInput.value = diaria.data_diaria;
                 editDiariaFuncaoSelect.value = diaria.funcao_colaborador;
                 editDiariaSetorSelect.value = diaria.setor_colaborador;
@@ -1994,7 +2007,7 @@
 
             // Lógica para calcular e atualizar o valor no modal de edição
             editDiariaFuncaoSelect.addEventListener('change', () => calculateAndSetDiariaValue(true));
-            editDiariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(true)); // Chamada para re-avaliar visibilidade
+            editDiariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(true)); 
             editDiariaHoraEntradaInput.addEventListener('change', () => calculateAndSetDiariaValue(true));
             editDiariaHoraSaidaInput.addEventListener('change', () => calculateAndSetDiariaValue(true));
 
@@ -2010,10 +2023,9 @@
 
                 // Recalcular o valor com base nos novos dados
                 const valorPago = calculateAndSetDiariaValue(true);
-                let horasTrabalhadas = null; // Re-calculate hours if applicable
+                let horasTrabalhadas = null; 
                 
-                // Recalcular horas trabalhadas com base na nova função/dobrou/horários
-                const funcao = (funcaoColaborador || '').toLowerCase(); // Garante que a função não é nula
+                const funcao = (funcaoColaborador || '').toLowerCase();
                 if (['cumim', 'asg', 'recepção', 'recepcao'].some(f => funcao.includes(f))) {
                     if (dobrou) {
                         horasTrabalhadas = 16;
@@ -2049,8 +2061,8 @@
                     console.error("Erro na atualização da diária:", error);
                 } else {
                     alert('Diária atualizada com sucesso!');
-                    editDiariaModal.style.display = 'none'; // Esconde o modal
-                    showGerenciarDiariasScreen(); // Recarrega a lista de diárias
+                    editDiariaModal.style.display = 'none'; 
+                    showGerenciarDiariasScreen(); 
                 }
             }
 
@@ -2070,7 +2082,7 @@
                     console.error("Erro na exclusão da diária:", error);
                 } else {
                     alert('Diária excluída com sucesso!');
-                    showGerenciarDiariasScreen(); // Recarrega a lista
+                    showGerenciarDiariasScreen(); 
                 }
             }
 
@@ -2095,7 +2107,7 @@
                     .order('timestamp', { ascending: false });
 
                 if (error) {
-                    console.error("Erro ao buscar histórico:", error.message || error.details || error); // Log detalhado
+                    console.error("Erro ao buscar histórico:", error.message || error.details || error); 
                     historicoTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">Erro ao carregar histórico: ${error.message || 'Verifique o console para detalhes.'}</td></tr>`;
                     return;
                 }
@@ -2125,16 +2137,7 @@
             function formatHistoryDetails(action, oldData, newData) {
                 // Tenta obter o nome do colaborador da diária, se disponível
                 const getColabName = (dataObj) => {
-                    // Se a estrutura da diária é direta (sem join) e tem colaborador_id
-                    if (dataObj && dataObj.colaborador_id) {
-                        const colabInCache = colaboradoresCache.find(c => c.id === dataObj.colaborador_id);
-                        if (colabInCache) return colabInCache.nome_completo;
-                    }
-                    // Se o nome_completo veio diretamente no new_data/old_data (como no select de gerenciar diarias)
-                    // Note: o `new_data` e `old_data` nos triggers podem conter o ID do colaborador,
-                    // mas não necessariamente o objeto 'colaboradores' aninhado como no fetch.
-                    // Para buscar o nome, teríamos que fazer outro lookup ou garantir que o trigger armazene mais info.
-                    // Por enquanto, vamos buscar do cache de colaboradores.
+                    // Para buscar o nome, agora usamos o cache de colaboradores.
                     if (dataObj && dataObj.colaborador_id) { 
                         const colab = colaboradoresCache.find(c => c.id === dataObj.colaborador_id);
                         if (colab) return colab.nome_completo;
@@ -2194,12 +2197,11 @@
                 
                 // Lançamento de Diárias
                 btnGoToLancarDiaria.addEventListener('click', showLancarDiariasScreen);
-                // CORREÇÃO AQUI: Passa false explicitamente para isEditContext no listener
                 diariaColaboradorSelect.addEventListener('change', () => toggleDiariaFields(false));
                 diariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(false));
-                diariaHoraEntradaInput.addEventListener('change', () => calculateAndSetDiariaValue(false)); // Para novos lançamentos
-                diariaHoraSaidaInput.addEventListener('change', () => calculateAndSetDiariaValue(false)); // Para novos lançamentos
-                diariaColaboradorSelect.addEventListener('change', () => calculateAndSetDiariaValue(false)); // para forçar cálculo ao trocar colab
+                diariaHoraEntradaInput.addEventListener('change', () => calculateAndSetDiariaValue(false)); 
+                diariaHoraSaidaInput.addEventListener('change', () => calculateAndSetDiariaValue(false)); 
+                diariaColaboradorSelect.addEventListener('change', () => calculateAndSetDiariaValue(false)); 
                 btnSalvarDiaria.addEventListener('click', handleSalvarDiaria);
                 
                 // Relatórios
