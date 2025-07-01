@@ -78,7 +78,7 @@
             margin-top: 0; 
             color: var(--color-primary); /* Títulos em cor primária */
             line-height: 1.2; 
-            font-weight: 600; /* Mais peso */
+            font-weight: 600; /* Más peso */
         }
         h1 { font-size: 2.2rem; margin-bottom: var(--spacing-unit); }
         h2 { font-size: 1.8rem; text-align: left; margin-bottom: calc(var(--spacing-unit) * 1.2); }
@@ -1277,9 +1277,9 @@
                     alternateRowStyles: { fillColor: [248, 249, 250] },
                     margin: { horizontal: defaultMargin }, 
                     columnStyles: {
-                        0: { halign: 'left' }, // 'Nome Completo' alinhado à esquerda
-                        1: { halign: 'left' }, // 'Chave PIX' alinhado à esquerda
-                        2: { halign: 'right' } // 'Valor Total' alinhado à direita
+                        0: { halign: 'left', columnWidth: 'auto' }, // 'Nome Completo' alinhado à esquerda
+                        1: { halign: 'left', columnWidth: 'auto' }, // 'Chave PIX' alinhado à esquerda
+                        2: { halign: 'right', columnWidth: 35 } // 'Valor Total' alinhado à direita e com largura fixa
                     },
                     didParseCell: function(data) {
                         // Força o alinhamento à esquerda para o cabeçalho da primeira coluna
@@ -1325,8 +1325,8 @@
                     alternateRowStyles: { fillColor: [248, 249, 250] },
                     margin: { horizontal: defaultMargin }, 
                     columnStyles: {
-                        0: { halign: 'left' }, // 'Setor' alinhado à esquerda
-                        1: { halign: 'right' } // 'Valor Total' alinhado à direita
+                        0: { halign: 'left', columnWidth: 'auto' }, // 'Setor' alinhado à esquerda
+                        1: { halign: 'right', columnWidth: 35 } // 'Valor Total' alinhado à direita e com largura fixa
                     },
                     foot: [['TOTAL GERAL', `R$ ${totalGeral.toFixed(2)}`]], 
                     footStyles: {
