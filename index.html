@@ -1470,23 +1470,18 @@
                 }
 
                 try {
-                    // Chamar a Edge Function 'list-users' para buscar os usuários
-                    const response = await fetch(`${SUPABASE_URL}/functions/v1/list-users`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            // A chave anon pode ser usada para chamar a função,
-                            // pois a Edge Function internamente usa a service_role_key.
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}` 
-                        }
-                    });
+                    // Consulta a nova tabela 'perfis'
+                    const { data: allUsers, error: allUsersError } = await _supabase
+                        .from('perfis') // MUDANÇA AQUI: AGORA CONSULTA 'perfis'
+                        .select('id, email, created_at, nome_completo'); // Ajuste os campos que você quer
 
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error || 'Erro ao chamar a função de listagem de usuários.');
+                    if (allUsersError) {
+                        console.error("Erro ao buscar usuários (tabela perfis):", allUsersError);
+                        listarLoginsMessage.textContent = `Erro ao carregar usuários: ${allUsersError.message}.`;
+                        listarLoginsMessage.style.display = 'block';
+                        usersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Erro ao carregar usuários.</td></tr>';
+                        return;
                     }
-
-                    const allUsers = await response.json();
                     
                     usersTableBody.innerHTML = '';
                     if (allUsers.length === 0) {
@@ -1497,14 +1492,14 @@
                             row.innerHTML = `
                                 <td>${user.email || 'N/A'}</td>
                                 <td>${user.id || 'N/A'}</td>
-                                <td>${user.email_confirmed_at ? 'Confirmado' : 'Pendente'}</td>
-                                <td>${new Date(user.created_at).toLocaleDateString('pt-BR')}</td>
+                                <td>${user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : 'N/A'}</td>
+                                <td>${user.nome_completo || 'N/A'}</td>
                             `;
                         });
                     }
                 } catch (error) {
-                    console.error("Erro ao listar usuários:", error);
-                    listarLoginsMessage.textContent = `Erro ao carregar usuários: ${error.message}.`;
+                    console.error("Erro inesperado ao listar usuários:", error);
+                    listarLoginsMessage.textContent = `Erro inesperado: ${error.message}.`;
                     listarLoginsMessage.style.display = 'block';
                     usersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Erro ao carregar usuários.</td></tr>';
                 }
