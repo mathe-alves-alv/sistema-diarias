@@ -1216,7 +1216,7 @@
                 
                 const currentDiariaFuncaoInput = isEditContext ? editDiariaFuncaoSelect : diariaFuncaoInput;
                 const currentDiariaSetorInput = isEditContext ? editDiariaSetorSelect : diariaSetorInput;
-                // CORREÇÃO AQUI: editDiariaCamposDinamicos agora é o ID do div que agrupa os campos de hora no modal
+                // CORREÇÃO AQUI: Agora editDiariaCamposDinamicos já é o elemento que queremos controlar o display
                 const currentDiariaCamposDinamicos = isEditContext ? editDiariaCamposDinamicos : diariaCamposDinamicos;
                 const currentDiariaHorasContainer = isEditContext ? editDiariaHorasContainer : diariaHorasContainer;
                 const currentDiariaDobrouCheckbox = isEditContext ? editDiariaDobrouCheckbox : diariaDobrouCheckbox;
@@ -1321,12 +1321,14 @@
                     horario_saida: horaSaida,
                     funcao_colaborador: colaborador.funcao, 
                     setor_colaborador: colaborador.setor
+                    // Não inclua o ID aqui, ele é auto-gerado pelo BD
                 };
                 
                 const { error } = await _supabase.from('diarias_lancadas').insert([lancamento]);
                 if (error) { 
                     alert(`Erro ao lançar diária: ${error.message}`); 
-                    console.error("Erro no lançamento da diária:", error);
+                    // LOG DETALHADO DO ERRO:
+                    console.error("Erro no lançamento da diária:", error.message || error.details || error);
                 } else {
                     alert(`Diária de R$ ${valorPago.toFixed(2)} para ${colaborador.nome_completo} lançada com sucesso!`);
                     showScreen('dashboard');
@@ -1909,7 +1911,7 @@
                         funcao_colaborador,
                         setor_colaborador,
                         colaboradores(nome_completo),
-                        perfis!inner(email, nome_completo) /* AQUI MUDANÇA CRUCIAL: !inner para forçar join e verificar se o user_id é válido e está em perfis */
+                        perfis!inner(email, nome_completo) 
                     `)
                     .order('data_diaria', { ascending: false });
 
@@ -1930,7 +1932,7 @@
                 diariasCache.forEach(diaria => {
                     const row = gerenciarDiariasTableBody.insertRow();
                     const colaboradorNome = diaria.colaboradores?.nome_completo || 'Desconhecido';
-                    const lancadoPor = diaria.perfis?.nome_completo || diaria.perfis?.email || 'N/A'; // Usar perfis diretamente
+                    const lancadoPor = diaria.perfis?.nome_completo || diaria.perfis?.email || 'N/A'; 
                     
                     row.innerHTML = `
                         <td>${diaria.id.substring(0, 8)}...</td>
@@ -2189,7 +2191,7 @@
                 
                 // Lançamento de Diárias
                 btnGoToLancarDiaria.addEventListener('click', showLancarDiariasScreen);
-                // CORREÇÃO AQUI: Passa false explicitamente para isEditContext
+                // CORREÇÃO AQUI: Passa false explicitamente para isEditContext no listener
                 diariaColaboradorSelect.addEventListener('change', () => toggleDiariaFields(false));
                 diariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(false));
                 diariaHoraEntradaInput.addEventListener('change', () => calculateAndSetDiariaValue(false)); // Para novos lançamentos
