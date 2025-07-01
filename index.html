@@ -769,7 +769,7 @@
                 </div>
             </div>
 
-            <div id="editDiariaModal" class="modal" style="display: none;">
+            <div id="editDiariaModal" class="modal">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h2>Editar Diária</h2>
@@ -1185,9 +1185,10 @@
             // --- LANÇAMENTO DE DIÁRIAS - LÓGICA ---
             async function showLancarDiariasScreen() {
                 const { data, error } = await _supabase.from('colaboradores').select('id, nome_completo, funcao, setor').eq('ativo', true).order('nome_completo');
-                if(error) { console.error(error); alert("Erro ao carregar colaboradores."); return; }
+                if(error) { console.error("Erro ao carregar colaboradores para lançamento de diária:", error); alert("Erro ao carregar colaboradores."); return; }
                 colaboradoresCache = data;
-                
+                console.log("Colaboradores cache (Lançar Diária):", colaboradoresCache); // LOG DE DEBUG
+
                 diariaColaboradorSelect.innerHTML = '<option value="">-- Selecione um Colaborador --</option>';
                 colaboradoresCache.forEach(colab => {
                     diariaColaboradorSelect.innerHTML += `<option value="${colab.id}">${colab.nome_completo}</option>`;
@@ -1195,7 +1196,11 @@
                 
                 diariaDataInput.valueAsDate = new Date();
                 diariaCamposDinamicos.style.display = 'none';
-                [diariaFuncaoInput, diariaSetorInput, diariaHoraEntradaInput, diariaHoraSaidaInput].forEach(i => i.value = '');
+                // Resetar campos de função e setor ao carregar a tela
+                diariaFuncaoInput.value = ''; 
+                diariaSetorInput.value = '';
+                diariaHoraEntradaInput.value = '';
+                diariaHoraSaidaInput.value = '';
                 diariaDobrouCheckbox.checked = false;
                 
                 showScreen('lancarDiarias');
@@ -1207,22 +1212,29 @@
                 
                 const currentDiariaFuncaoInput = isEditContext ? editDiariaFuncaoSelect : diariaFuncaoInput;
                 const currentDiariaSetorInput = isEditContext ? editDiariaSetorSelect : diariaSetorInput;
-                const currentDiariaCamposDinamicos = isEditContext ? editDiariaDobrouCheckbox : diariaCamposDinamicos;
+                const currentDiariaCamposDinamicos = isEditContext ? editDiariaHorasContainer.closest('.form-group').parentElement : diariaCamposDinamicos; // Usar parentElement para pegar o div completo
                 const currentDiariaHorasContainer = isEditContext ? editDiariaHorasContainer : diariaHorasContainer;
                 const currentDiariaDobrouCheckbox = isEditContext ? editDiariaDobrouCheckbox : diariaDobrouCheckbox;
 
+                console.log("toggleDiariaFields called. isEditContext:", isEditContext); // LOG DE DEBUG
+                console.log("selectedColabId:", selectedColabId); // LOG DE DEBUG
+                console.log("Colaborador encontrado no cache:", colaborador); // LOG DE DEBUG
 
                 if (!colaborador) {
-                    currentDiariaCamposDinamicos.style.display = 'none'; // Esconde para a edição também
+                    currentDiariaCamposDinamicos.style.display = 'none'; 
                     currentDiariaFuncaoInput.value = '';
                     currentDiariaSetorInput.value = '';
+                    console.log("Nenhum colaborador encontrado para o ID selecionado."); // LOG DE DEBUG
                     return;
                 }
 
-                currentDiariaFuncaoInput.value = colaborador.funcao || '---';
-                currentDiariaSetorInput.value = colaborador.setor || '---';
+                currentDiariaFuncaoInput.value = colaborador.funcao || '';
+                currentDiariaSetorInput.value = colaborador.setor || '';
                 
-                const funcao = colaborador.funcao.toLowerCase();
+                // LOG DE DEBUG: Verificar os valores que estão sendo setados
+                console.log("Setando função para:", currentDiariaFuncaoInput.value, "e setor para:", currentDiariaSetorInput.value);
+
+                const funcao = (colaborador.funcao || '').toLowerCase(); // Garante que a função não é nula
                 if (['cumim', 'asg', 'recepção', 'recepcao'].some(f => funcao.includes(f))) {
                     currentDiariaCamposDinamicos.style.display = 'block';
                     currentDiariaHorasContainer.style.display = currentDiariaDobrouCheckbox.checked ? 'none' : 'flex';
@@ -1245,7 +1257,7 @@
                 const colaborador = colaboradoresCache.find(c => c.id == colaboradorId);
                 if (!colaborador) { alert('Colaborador não encontrado. Recarregue a página.'); return; }
 
-                const funcao = colaborador.funcao.toLowerCase();
+                const funcao = (colaborador.funcao || '').toLowerCase(); // Garante que a função não é nula
                 const dobrou = diariaDobrouCheckbox.checked;
                 let horaEntrada = diariaHoraEntradaInput.value;
                 let horaSaida = diariaHoraSaidaInput.value;
@@ -1408,6 +1420,35 @@
                     totalGeral: totalGeral,
                     periodo: { inicio: dataInicio, fim: dataFim }
                 };
+            }
+
+            // Função para exibir o resumo na tela
+            function exibirResumoNaTela(dadosProcessados) {
+                const { pagamentos, gastos, totalGeral, periodo } = dadosProcessados;
+
+                // Limpa e exibe a seção de pagamentos
+                resumoPagamentosBody.innerHTML = '';
+                pagamentos.forEach(item => {
+                    const row = resumoPagamentosBody.insertRow();
+                    row.innerHTML = `
+                        <td class="text-left">${item.nome}</td>
+                        <td class="text-left">${item.pix}</td>
+                        <td class="text-right">R$ ${item.total.toFixed(2)}</td>
+                    `;
+                });
+                resumoPagamentosTotal.textContent = `R$ ${totalGeral.toFixed(2)}`;
+                resumoPagamentosDiv.style.display = 'block';
+
+                // Limpa e exibe a seção de gastos
+                resumoGastosBody.innerHTML = '';
+                gastos.forEach(item => {
+                    const row = resumoGastosBody.insertRow();
+                    row.innerHTML = `
+                        <td class="text-left">${item.setor}</td>
+                        <td class="text-right">R$ ${item.total.toFixed(2)}</td>
+                    `;
+                });
+                resumoGastosDiv.style.display = 'block';
             }
 
             // Função para gerar PDF (melhorada com a função de processamento)
@@ -1699,8 +1740,8 @@
                         .select('id, email, created_at, nome_completo'); // Ajuste os campos que você quer
 
                     if (allUsersError) {
-                        console.error("Erro ao buscar usuários (tabela perfis):", allUsersError);
-                        listarLoginsMessage.textContent = `Erro ao carregar usuários: ${allUsersError.message}.`;
+                        console.error("Erro ao buscar usuários (tabela perfis):", allUsersError.message || allUsersError.details || allUsersError); // Log detalhado
+                        listarLoginsMessage.textContent = `Erro ao carregar usuários: ${allUsersError.message || 'Detalhes no console.'}.`;
                         listarLoginsMessage.style.display = 'block';
                         usersTableBody.innerHTML = '<tr><td colspan="1" style="text-align: center; padding: 20px;">Erro ao carregar usuários.</td></tr>';
                         return;
@@ -1868,8 +1909,9 @@
                     .order('data_diaria', { ascending: false });
 
                 if (error) {
-                    console.error("Erro ao buscar diárias para gerenciamento:", error);
-                    gerenciarDiariasTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Erro ao carregar diárias.</td></tr>';
+                    // LOG DE ERRO MELHORADO:
+                    console.error("Erro ao buscar diárias para gerenciamento:", error.message || error.details || error); 
+                    gerenciarDiariasTableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px;">Erro ao carregar diárias: ${error.message || 'Verifique o console para detalhes.'}</td></tr>`;
                     return;
                 }
                 diariasCache = data; // Armazena as diárias para acesso rápido na edição
@@ -1942,7 +1984,7 @@
 
             // Lógica para calcular e atualizar o valor no modal de edição
             editDiariaFuncaoSelect.addEventListener('change', () => calculateAndSetDiariaValue(true));
-            editDiariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(true));
+            editDiariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(true)); // Chamada para re-avaliar visibilidade
             editDiariaHoraEntradaInput.addEventListener('change', () => calculateAndSetDiariaValue(true));
             editDiariaHoraSaidaInput.addEventListener('change', () => calculateAndSetDiariaValue(true));
 
@@ -1961,7 +2003,7 @@
                 let horasTrabalhadas = null; // Re-calculate hours if applicable
                 
                 // Recalcular horas trabalhadas com base na nova função/dobrou/horários
-                const funcao = funcaoColaborador.toLowerCase();
+                const funcao = (funcaoColaborador || '').toLowerCase(); // Garante que a função não é nula
                 if (['cumim', 'asg', 'recepção', 'recepcao'].some(f => funcao.includes(f))) {
                     if (dobrou) {
                         horasTrabalhadas = 16;
@@ -2043,8 +2085,8 @@
                     .order('timestamp', { ascending: false });
 
                 if (error) {
-                    console.error("Erro ao buscar histórico:", error);
-                    historicoTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Erro ao carregar histórico.</td></tr>';
+                    console.error("Erro ao buscar histórico:", error.message || error.details || error); // Log detalhado
+                    historicoTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">Erro ao carregar histórico: ${error.message || 'Verifique o console para detalhes.'}</td></tr>`;
                     return;
                 }
 
@@ -2071,11 +2113,25 @@
 
             // Função auxiliar para formatar detalhes do histórico
             function formatHistoryDetails(action, oldData, newData) {
+                // Tenta obter o nome do colaborador da diária, se disponível
+                const getColabName = (dataObj) => {
+                    // Se a estrutura da diária é direta (sem join) e tem colaborador_id
+                    if (dataObj && dataObj.colaborador_id) {
+                        const colabInCache = colaboradoresCache.find(c => c.id === dataObj.colaborador_id);
+                        if (colabInCache) return colabInCache.nome_completo;
+                    }
+                    // Se o nome_completo veio diretamente no new_data/old_data (como no select de gerenciar diarias)
+                    if (dataObj && dataObj.colaboradores && dataObj.colaboradores.nome_completo) {
+                        return dataObj.colaboradores.nome_completo;
+                    }
+                    return dataObj?.funcao_colaborador || 'colaborador';
+                };
+
                 switch (action) {
                     case 'created':
-                        return `Diária de ${newData?.colaboradores?.nome_completo || newData?.funcao_colaborador || 'colaborador'} (R$ ${newData?.valor_pago?.toFixed(2)}) criada.`;
+                        return `Diária de ${getColabName(newData)} (R$ ${newData?.valor_pago?.toFixed(2)}) criada.`;
                     case 'updated':
-                        let details = `Diária de ${oldData?.colaboradores?.nome_completo || oldData?.funcao_colaborador || 'colaborador'} alterada. `;
+                        let details = `Diária de ${getColabName(oldData)} (${oldData?.valor_pago?.toFixed(2) || ''}) alterada. `;
                         // Comparar campos para mostrar o que mudou (simplificado)
                         if (oldData?.valor_pago !== newData?.valor_pago) {
                             details += `Valor: R$ ${oldData?.valor_pago?.toFixed(2)} -> R$ ${newData?.valor_pago?.toFixed(2)}. `;
@@ -2083,9 +2139,12 @@
                         if (oldData?.funcao_colaborador !== newData?.funcao_colaborador) {
                             details += `Função: ${oldData?.funcao_colaborador} -> ${newData?.funcao_colaborador}. `;
                         }
+                        if (oldData?.data_diaria !== newData?.data_diaria) {
+                            details += `Data: ${new Date(oldData?.data_diaria + 'T00:00:00').toLocaleDateString('pt-BR')} -> ${new Date(newData?.data_diaria + 'T00:00:00').toLocaleDateString('pt-BR')}. `;
+                        }
                         return details.trim();
                     case 'deleted':
-                        return `Diária de ${oldData?.colaboradores?.nome_completo || oldData?.funcao_colaborador || 'colaborador'} (R$ ${oldData?.valor_pago?.toFixed(2)}) excluída.`;
+                        return `Diária de ${getColabName(oldData)} (R$ ${oldData?.valor_pago?.toFixed(2)}) excluída.`;
                     default:
                         return JSON.stringify(newData || oldData || {});
                 }
@@ -2123,6 +2182,9 @@
                 btnDiariasVoltar.addEventListener('click', () => showScreen('dashboard'));
                 diariaColaboradorSelect.addEventListener('change', toggleDiariaFields);
                 diariaDobrouCheckbox.addEventListener('change', toggleDiariaFields);
+                diariaHoraEntradaInput.addEventListener('change', () => calculateAndSetDiariaValue(false)); // Para novos lançamentos
+                diariaHoraSaidaInput.addEventListener('change', () => calculateAndSetDiariaValue(false)); // Para novos lançamentos
+                diariaColaboradorSelect.addEventListener('change', () => calculateAndSetDiariaValue(false)); // para forçar cálculo ao trocar colab
                 btnSalvarDiaria.addEventListener('click', handleSalvarDiaria);
                 
                 // Relatórios
