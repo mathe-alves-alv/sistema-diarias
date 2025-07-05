@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1323,9 +1322,8 @@
                     horario_entrada: horaEntrada,
                     horario_saida: horaSaida,
                     funcao_colaborador: colaborador.funcao, 
-                    setor_colaborador: colaborador.setor
-                    // Não inclua o ID aqui, ele é auto-gerado pelo BD.
-                    // O trigger handle_diaria_create cuidará do user_id e do histórico.
+                    setor_colaborador: colaborador.setor,
+                    user_id: currentUser.id // ✅ CORREÇÃO APLICADA AQUI
                 };
                 
                 const { error } = await _supabase.from('diarias_lancadas').insert([lancamento]);
@@ -1901,7 +1899,7 @@
                 gerenciarDiariasTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Carregando diárias...</td></tr>';
                 showScreen('gerenciarDiarias');
 
-                // AQUI FOI O ERRO DE RELACIONAMENTO, AGORA CONSULTAMOS APENAS AS COLUNAS DIRETAS OU VIA FK Simples
+                // ✅ CORREÇÃO APLICADA AQUI
                 const { data, error } = await _supabase
                     .from('diarias_lancadas')
                     .select(`
@@ -1914,8 +1912,8 @@
                         horario_saida,
                         funcao_colaborador,
                         setor_colaborador,
-                        colaborador_id, /* Incluímos o colaborador_id para lookup manual */
-                        user_id         /* Incluímos o user_id para lookup manual */
+                        colaborador_id,
+                        user_id
                     `)
                     .order('data_diaria', { ascending: false });
 
