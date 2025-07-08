@@ -1409,7 +1409,7 @@
                 
                 if (!colaboradorId || !dataDiaria) { alert('Por favor, selecione o colaborador e a data.'); return; }
 
-                const colaborador = colaboradoresCache.Homedata.find(c => c.id == colaboradorId);
+                const colaborador = colaboradoresCache.find(c => c.id == colaboradorId);
                 if (!colaborador) { alert('Colaborador não encontrado. Recarregue a página.'); return; }
 
                 const { valorCalculado, horasTrabalhadas } = calculateAndSetDiariaValue(false); // Obtém o valor e horas da função de cálculo
@@ -1522,11 +1522,12 @@
                     totalGeral += valorDiaria;
                 });
 
+                // CORRIGIDO: Typo de pagamentosPorColador para pagamentosPorColaborador
                 const tabelaPagamentosData = Object.keys(pagamentosPorColaborador).map(nome => {
                     return {
                         nome: nome,
-                        pix: pagamentosPorColador[nome].pix,
-                        total: pagamentosPorColaborador[nome].total
+                        pix: pagamentosPorColaborador[nome].pix, // Correção aqui
+                        total: pagamentosPorColaborador[nome].total // Correção aqui
                     };
                 }).sort((a, b) => a.nome.localeCompare(b.nome));
 
@@ -1714,12 +1715,12 @@
                         if (data.section === 'head' && data.column.index === 0) {
                             data.cell.styles.halign = 'left';
                         }
-                        // NOVO: Ajuste para alinhar "TOTAL GERAL" à ESQUERDA na primeira coluna do rodapé
+                        // CORRIGIDO: Alinha "TOTAL GERAL" à ESQUERDA na primeira coluna do rodapé
                         if (data.section === 'foot') {
                             if (data.column.index === 0) { 
-                                data.cell.styles.halign = 'left'; // Alinha a label "TOTAL GERAL" à esquerda
+                                data.cell.styles.halign = 'left'; 
                             } else if (data.column.index === 1) { 
-                                data.cell.styles.halign = 'right'; // Alinha o valor à direita
+                                data.cell.styles.halign = 'right'; 
                             }
                         }
                     },
@@ -1864,7 +1865,7 @@
                 try {
                     const { data: allUsers, error: allUsersError } = await _supabase
                         .from('perfis') 
-                        .select('id, email, created_at, nome_completo'); 
+                        .select('id, email, nome_completo'); 
 
                     if (allUsersError) {
                         console.error("Erro ao buscar usuários (tabela perfis):", allUsersError.message || allUsersError.details || allUsersError); 
@@ -2012,8 +2013,8 @@
                 diariasCache.forEach(diaria => {
                     const row = gerenciarDiariasTableBody.insertRow();
                     const colaboradorNome = colabsMap.get(diaria.colaborador_id) || 'Desconhecido'; 
-                    // CORRIGIDO: Fallback para user_id se nome/email não for encontrado no perfil
-                    const lancadoPor = perfisMap.get(diaria.user_id) || (diaria.user_id ? diaria.user_id.substring(0, 8) + '...' : 'N/A');
+                    // CORRIGIDO: Fallback para user_id (truncado) se nome/email não for encontrado no perfil
+                    const lancadoPor = perfisMap.get(diaria.user_id) || (diaria.user_id ? `ID: ${diaria.user_id.substring(0, 8)}...` : 'N/A');
                     if (!perfisMap.has(diaria.user_id) && diaria.user_id) {
                          console.warn(`User ID ${diaria.user_id} em diárias_lancadas não encontrado na tabela perfis.`);
                     }
@@ -2151,6 +2152,7 @@
 
             // --- Histórico (screenHistorico) ---
             async function showHistoricoScreen() {
+                // Ajustado colspan para 4, removendo coluna Diária ID
                 historicoTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>';
                 showScreen('historico');
 
@@ -2188,7 +2190,6 @@
                     row.innerHTML = `
                         <td>${recordDate}</td>
                         <td>${record.action.toUpperCase()}</td>
-                        <td>${record.diaria_id ? record.diaria_id.substring(0, 8) + '...' : 'N/A'}</td>
                         <td>${record.user_email || 'Desconhecido'}</td>
                         <td>${actionDetails}</td>
                     `;
