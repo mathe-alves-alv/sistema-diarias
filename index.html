@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Diárias</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/xlsx.full.min.js"></script>
     
     <style>
         /* Variáveis de Design Global */
@@ -78,7 +78,7 @@
             margin-top: 0; 
             color: var(--color-primary); /* Títulos em cor primária */
             line-height: 1.2; 
-            font-weight: 600; /* Mais peso */
+            font-weight: 600; /* Más peso */
         }
         h1 { font-size: 2.2rem; margin-bottom: var(--spacing-unit); }
         h2 { font-size: 1.8rem; text-align: left; margin-bottom: calc(var(--spacing-unit) * 1.2); }
@@ -1653,9 +1653,9 @@
                     margin: { horizontal: defaultMargin }, 
                     // Ajuste de largura de colunas para PDF
                     columnStyles: {
-                        0: { halign: 'left', columnWidth: usableWidth * 0.45 }, // Nome Completo (45%)
-                        1: { halign: 'left', columnWidth: usableWidth * 0.30 }, // Chave PIX (30%)
-                        2: { halign: 'right', columnWidth: usableWidth * 0.25 } // Valor Total (25%)
+                        0: { halign: 'left', cellWidth: usableWidth * 0.45 }, // Nome Completo (45%)
+                        1: { halign: 'left', cellWidth: usableWidth * 0.30 }, // Chave PIX (30%)
+                        2: { halign: 'right', cellWidth: usableWidth * 0.25 } // Valor Total (25%)
                     },
                     didParseCell: function(data) {
                         if (data.section === 'head' && data.column.index === 0) {
@@ -1700,8 +1700,8 @@
                     margin: { horizontal: defaultMargin }, 
                     // Ajuste de largura de colunas para PDF
                     columnStyles: {
-                        0: { halign: 'left', columnWidth: usableWidth * 0.70 }, // Setor (70%)
-                        1: { halign: 'right', columnWidth: usableWidth * 0.30 } // Valor Total (30%)
+                        0: { halign: 'left', cellWidth: usableWidth * 0.70 }, // Setor (70%)
+                        1: { halign: 'right', cellWidth: usableWidth * 0.30 } // Valor Total (30%)
                     },
                     foot: [['TOTAL GERAL', `R$ ${totalGeral.toFixed(2).replace('.', ',')}`]], 
                     footStyles: {
@@ -1715,9 +1715,10 @@
                         if (data.section === 'head' && data.column.index === 0) {
                             data.cell.styles.halign = 'left';
                         }
+                        // NOVO: Ajuste para alinhar "TOTAL GERAL" à direita na primeira coluna do rodapé
                         if (data.section === 'foot') {
                             if (data.column.index === 0) { 
-                                data.cell.styles.halign = 'left';
+                                data.cell.styles.halign = 'right'; // Alinha a label "TOTAL GERAL" à direita
                             } else if (data.column.index === 1) { 
                                 data.cell.styles.halign = 'right';
                             }
@@ -1745,8 +1746,15 @@
                     return;
                 }
 
+                console.log("Gerando relatório XLSX para o período:", dataInicio, "a", dataFim);
+
                 const dadosProcessados = await processarDadosRelatorio(dataInicio, dataFim);
-                if (!dadosProcessados) return;
+                if (!dadosProcessados) {
+                    console.log("Nenhum dado processado para o relatório XLSX. Abortando geração.");
+                    return;
+                }
+
+                console.log("Dados processados para XLSX:", dadosProcessados);
 
                 const { pagamentos, gastos, totalGeral, periodo } = dadosProcessados;
 
@@ -1778,14 +1786,18 @@
                 // Total Geral
                 ws_data.push(["TOTAL GERAL", totalGeral]);
 
+                console.log("Dados finais para a planilha XLSX:", ws_data);
+
                 const ws = XLSX.utils.aoa_to_sheet(ws_data);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Relatório Diárias");
                 
                 const filename = `Relatorio_Diarias_${periodo.inicio}_a_${periodo.fim}.xlsx`;
+                console.log("Tentando gerar arquivo XLSX:", filename);
                 XLSX.writeFile(wb, filename);
 
                 alert('Relatório XLSX gerado com sucesso!');
+                console.log("Arquivo XLSX gerado com sucesso (XLSX.writeFile chamado).");
             }
 
 
@@ -2231,31 +2243,31 @@
 
                     regraDiv.innerHTML = `
                         <strong>${regra.funcao}</strong>
+                        <div class="form-group">
+                            <label for="tipoCalculo-${regra.id}">Tipo de Cálculo:</label>
+                            <select id="tipoCalculo-${regra.id}" data-field="tipo_calculo" data-id="${regra.id}">
+                                <option value="Fixo" ${isFixed ? 'selected' : ''}>Fixo</option>
+                                <option value="Fixo com Dobra" ${isHourlyOrDoubled ? 'selected' : ''}>Fixo com Dobra</option>
+                            </select>
+                        </div>
                         <div class="regra-fields">
-                            <div class="form-group">
-                                <label for="tipoCalculo-${regra.id}">Tipo de Cálculo:</label>
-                                <select id="tipoCalculo-${regra.id}" data-field="tipo_calculo" data-id="${regra.id}">
-                                    <option value="Fixo" ${isFixed ? 'selected' : ''}>Fixo</option>
-                                    <option value="Fixo com Dobra" ${isHourlyOrDoubled ? 'selected' : ''}>Fixo com Dobra</option>
-                                </select>
-                            </div>
-                            <div class="form-group ${isFixed || isHourlyOrDoubled ? '' : 'hidden'}" id="valorBaseGroup-${regra.id}">
+                            <div class="form-group" id="valorBaseGroup-${regra.id}">
                                 <label for="valorBase-${regra.id}">Valor Base (R$):</label>
                                 <input type="number" step="0.01" id="valorBase-${regra.id}" value="${regra.valor_base}" data-field="valor_base" data-id="${regra.id}">
                             </div>
-                            <div class="form-group ${isHourlyOrDoubled ? '' : 'hidden'}" id="horasBaseGroup-${regra.id}">
+                            <div class="form-group" id="horasBaseGroup-${regra.id}">
                                 <label for="horasBase-${regra.id}">Horas Base:</label>
                                 <input type="number" step="1" id="horasBase-${regra.id}" value="${regra.horas_base || ''}" data-field="horas_base" data-id="${regra.id}">
                             </div>
-                            <div class="form-group ${isHourlyOrDoubled ? '' : 'hidden'}" id="valorHoraExtraGroup-${regra.id}">
+                            <div class="form-group" id="valorHoraExtraGroup-${regra.id}">
                                 <label for="valorHoraExtra-${regra.id}">Valor Hora Extra (R$):</label>
                                 <input type="number" step="0.01" id="valorHoraExtra-${regra.id}" value="${regra.valor_hora_extra || ''}" data-field="valor_hora_extra" data-id="${regra.id}">
                             </div>
-                            <div class="form-group ${isHourlyOrDoubled ? '' : 'hidden'}" id="valorDobraSemanaGroup-${regra.id}">
+                            <div class="form-group" id="valorDobraSemanaGroup-${regra.id}">
                                 <label for="valorDobraSemana-${regra.id}">Valor Dobra (Semana - R$):</label>
                                 <input type="number" step="0.01" id="valorDobraSemana-${regra.id}" value="${regra.valor_dobra_semana || ''}" data-field="valor_dobra_semana" data-id="${regra.id}">
                             </div>
-                            <div class="form-group ${isHourlyOrDoubled ? '' : 'hidden'}" id="valorDobraFDSGroup-${regra.id}">
+                            <div class="form-group" id="valorDobraFDSGroup-${regra.id}">
                                 <label for="valorDobraFDS-${regra.id}">Valor Dobra (FDS - R$):</label>
                                 <input type="number" step="0.01" id="valorDobraFDS-${regra.id}" value="${regra.valor_dobra_fds || ''}" data-field="valor_dobra_fds" data-id="${regra.id}">
                             </div>
