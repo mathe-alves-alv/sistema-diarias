@@ -1653,9 +1653,9 @@
                     margin: { horizontal: defaultMargin }, 
                     // Ajuste de largura de colunas para PDF
                     columnStyles: {
-                        0: { halign: 'left', minCellWidth: 50, cellWidth: 'auto' }, // Nome Completo
-                        1: { halign: 'left', minCellWidth: 40, cellWidth: 'auto' }, // Chave PIX
-                        2: { halign: 'right', minCellWidth: 30, cellWidth: 'auto' } // Valor Total
+                        0: { halign: 'left', columnWidth: usableWidth * 0.45 }, // Nome Completo (45%)
+                        1: { halign: 'left', columnWidth: usableWidth * 0.30 }, // Chave PIX (30%)
+                        2: { halign: 'right', columnWidth: usableWidth * 0.25 } // Valor Total (25%)
                     },
                     didParseCell: function(data) {
                         if (data.section === 'head' && data.column.index === 0) {
@@ -1700,8 +1700,8 @@
                     margin: { horizontal: defaultMargin }, 
                     // Ajuste de largura de colunas para PDF
                     columnStyles: {
-                        0: { halign: 'left', minCellWidth: 80, cellWidth: 'auto' }, // Setor
-                        1: { halign: 'right', minCellWidth: 40, cellWidth: 'auto' } // Valor Total
+                        0: { halign: 'left', columnWidth: usableWidth * 0.70 }, // Setor (70%)
+                        1: { halign: 'right', columnWidth: usableWidth * 0.30 } // Valor Total (30%)
                     },
                     foot: [['TOTAL GERAL', `R$ ${totalGeral.toFixed(2).replace('.', ',')}`]], 
                     footStyles: {
@@ -2091,7 +2091,7 @@
                     dobrou: dobrou,
                     horas_trabalhadas: horasTrabalhadas,
                     horario_entrada: horarioEntrada || null,
-                    horario_saida: horarioSaarioSaida || null,
+                    horario_saida: horarioSaida || null,
                     funcao_colaborador: funcaoColaborador,
                     setor_colaborador: setorColaborador
                 };
