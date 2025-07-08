@@ -955,7 +955,7 @@
             
             // Lançar Diárias
             const btnGoToLancarDiaria = document.getElementById('btnGoToLancarDiaria');
-            const btnLancarDiariasVoltar = document.getElementById('btnLancarDiariasVoltar'); // CORRIGIDO SELETOR
+            const btnLancarDiariasVoltar = document.getElementById('btnLancarDiariasVoltar'); 
             const btnSalvarDiaria = document.getElementById('btnSalvarDiaria');
             const diariaColaboradorSelect = document.getElementById('diariaColaborador'), diariaFuncaoInput = document.getElementById('diariaFuncao'), diariaSetorInput = document.getElementById('diariaSetor'), diariaDataInput = document.getElementById('diariaData'), diariaCamposDinamicos = document.getElementById('diariaCamposDinamicos'), diariaDobrouCheckbox = document.getElementById('diariaDobrou'), diariaHorasContainer = document.getElementById('diariaHorasContainer'), diariaHoraEntradaInput = document.getElementById('diariaHoraEntrada'), diariaHoraSaidaInput = document.getElementById('diariaHoraSaida');
             
@@ -1028,7 +1028,7 @@
             const btnGerenciarRegrasVoltar = document.getElementById('btnGerenciarRegrasVoltar');
             const regrasPagamentoList = document.getElementById('regrasPagamentoList');
             
-            // ID do administrador mestre (ATUALIZE ESTEE ID com o do seu usuário admin no Supabase!)
+            // ID do administrador mestre (ATUALIZE ESTE ID com o do seu usuário admin no Supabase!)
             // Isso controla a VISIBILIDADE dos botões de ADMIN no frontend.
             // A SEGURANÇA REAL das operações é controlada pelas Políticas de RLS no Supabase!
             const ADMIN_USER_ID = 'a37a896b-0b5a-4b87-b8be-3358249a84ee'; 
@@ -1273,7 +1273,7 @@
                 showScreen('adicionarColaborador'); // Vai para a tela de formulário
             }
 
-            // --- Lançamento de Diárias - Lógica de Cálculo ee Exibição ---
+            // --- Lançamento de Diárias - Lógica de Cálculo e Exibição ---
             
             // Função de cálculo de valor da diária (reutilizada para edição)
             function calculateAndSetDiariaValue(isEditContext = false) {
@@ -2091,7 +2091,7 @@
                     dobrou: dobrou,
                     horas_trabalhadas: horasTrabalhadas,
                     horario_entrada: horarioEntrada || null,
-                    horario_saida: horarioSaida || null,
+                    horario_saida: horarioSaarioSaida || null,
                     funcao_colaborador: funcaoColaborador,
                     setor_colaborador: setorColaborador
                 };
@@ -2251,11 +2251,11 @@
                                 <label for="valorHoraExtra-${regra.id}">Valor Hora Extra (R$):</label>
                                 <input type="number" step="0.01" id="valorHoraExtra-${regra.id}" value="${regra.valor_hora_extra || ''}" data-field="valor_hora_extra" data-id="${regra.id}">
                             </div>
-                            <div class="form-group ${isHourlyOrDobled ? '' : 'hidden'}" id="valorDobraSemanaGroup-${regra.id}">
+                            <div class="form-group ${isHourlyOrDoubled ? '' : 'hidden'}" id="valorDobraSemanaGroup-${regra.id}">
                                 <label for="valorDobraSemana-${regra.id}">Valor Dobra (Semana - R$):</label>
                                 <input type="number" step="0.01" id="valorDobraSemana-${regra.id}" value="${regra.valor_dobra_semana || ''}" data-field="valor_dobra_semana" data-id="${regra.id}">
                             </div>
-                            <div class="form-group ${isHourlyOrDobled ? '' : 'hidden'}" id="valorDobraFDSGroup-${regra.id}">
+                            <div class="form-group ${isHourlyOrDoubled ? '' : 'hidden'}" id="valorDobraFDSGroup-${regra.id}">
                                 <label for="valorDobraFDS-${regra.id}">Valor Dobra (FDS - R$):</label>
                                 <input type="number" step="0.01" id="valorDobraFDS-${regra.id}" value="${regra.valor_dobra_fds || ''}" data-field="valor_dobra_fds" data-id="${regra.id}">
                             </div>
@@ -2299,27 +2299,38 @@
                 });
 
                 // Mostra os grupos relevantes
-                if (isFixed || isHourlyOrDoubled) { // Valor Base é comum para Fixo e Fixo com Dobra
+                if (isFixed || isHourlyOrDoubled) { 
                     const el = document.getElementById(`valorBaseGroup-${id}`);
                     if (el) el.classList.remove('hidden');
                 }
                 if (isHourlyOrDoubled) {
-                    document.getElementById(`horasBaseGroup-${id}`).classList.remove('hidden');
-                    document.getElementById(`valorHoraExtraGroup-${id}`).classList.remove('hidden');
-                    document.getElementById(`valorDobraSemanaGroup-${id}`).classList.remove('hidden');
-                    document.getElementById(`valorDobraFDSGroup-${id}`).classList.remove('hidden');
+                    const horasBaseEl = document.getElementById(`horasBaseGroup-${id}`);
+                    const valorHoraExtraEl = document.getElementById(`valorHoraExtraGroup-${id}`);
+                    const valorDobraSemanaEl = document.getElementById(`valorDobraSemanaGroup-${id}`);
+                    const valorDobraFDSEl = document.getElementById(`valorDobraFDSGroup-${id}`);
+                    
+                    if(horasBaseEl) horasBaseEl.classList.remove('hidden');
+                    if(valorHoraExtraEl) valorHoraExtraEl.classList.remove('hidden');
+                    if(valorDobraSemanaEl) valorDobraSemanaEl.classList.remove('hidden');
+                    if(valorDobraFDSEl) valorDobraFDSEl.classList.remove('hidden');
                 }
 
                 // Limpa valores dos campos ocultos para evitar dados inconsistentes no banco
                 const currentRegraDiv = document.querySelector(`.regra-item[data-id="${id}"]`);
-                if (!isHourlyOrDoubled) { // Se não é Fixo com Dobra, limpa esses campos
-                    currentRegraDiv.querySelector(`#horasBase-${id}`).value = '';
-                    currentRegraDiv.querySelector(`#valorHoraExtra-${id}`).value = '';
-                    currentRegraDiv.querySelector(`#valorDobraSemana-${id}`).value = '';
-                    currentRegraDiv.querySelector(`#valorDobraFDS-${id}`).value = '';
+                if (!isHourlyOrDoubled) { 
+                    const horasBaseInput = currentRegraDiv.querySelector(`#horasBase-${id}`);
+                    const valorHoraExtraInput = currentRegraDiv.querySelector(`#valorHoraExtra-${id}`);
+                    const valorDobraSemanaInput = currentRegraDiv.querySelector(`#valorDobraSemana-${id}`);
+                    const valorDobraFDSInput = currentRegraDiv.querySelector(`#valorDobraFDS-${id}`);
+                    
+                    if(horasBaseInput) horasBaseInput.value = '';
+                    if(valorHoraExtraInput) valorHoraExtraInput.value = '';
+                    if(valorDobraSemanaInput) valorDobraSemanaInput.value = '';
+                    if(valorDobraFDSInput) valorDobraFDSInput.value = '';
                 }
-                if (!isFixed && !isHourlyOrDobled) { // Se não é Fixo ou Fixo com Dobra (para futuros tipos)
-                     currentRegraDiv.querySelector(`#valorBase-${id}`).value = '';
+                if (!isFixed && !isHourlyOrDoubled) { 
+                     const valorBaseInput = currentRegraDiv.querySelector(`#valorBase-${id}`);
+                     if(valorBaseInput) valorBaseInput.value = '';
                 }
             }
 
@@ -2333,7 +2344,6 @@
                     const field = input.dataset.field;
                     let value = input.value;
 
-                    // Convertendo para número se for campo numérico, ou null se vazio
                     if (input.type === 'number') {
                         value = value === '' ? null : parseFloat(value); 
                     }
@@ -2425,7 +2435,7 @@
                 
                 // Lançamento de Diárias
                 btnGoToLancarDiaria.addEventListener('click', showLancarDiariasScreen);
-                btnLancarDiariasVoltar.addEventListener('click', () => showScreen('dashboard')); // CORRIGIDO
+                btnLancarDiariasVoltar.addEventListener('click', () => showScreen('dashboard')); 
                 diariaColaboradorSelect.addEventListener('change', () => toggleDiariaFields(false));
                 diariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(false));
                 diariaHoraEntradaInput.addEventListener('change', () => calculateAndSetDiariaValue(false)); 
@@ -2491,7 +2501,6 @@
                 // Gerenciar Diárias
                 btnGoToGerenciarDiarias.addEventListener('click', showGerenciarDiariasScreen);
                 btnGerenciarDiariasVoltar.addEventListener('click', () => showScreen('dashboard'));
-                // CORRIGIDO: Usa add/remove 'active' para controlar o modal
                 closeEditModalButton.addEventListener('click', () => editDiariaModal.classList.remove('active'));
                 cancelEditDiariaButton.addEventListener('click', () => editDiariaModal.classList.remove('active'));
                 saveEditDiariaButton.addEventListener('click', handleSaveEditDiaria);
