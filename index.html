@@ -50,7 +50,7 @@
         /* Contêiner Principal */
         .container {
             width: 100%;
-            max-width: 1024px; /* Um pouco mais compacto para foco */
+            max-width: 1024px; /* Um pouco más compacto para foco */
             margin-top: calc(var(--spacing-unit) * 2);
         }
 
@@ -631,6 +631,8 @@
                     <div class="form-group"><label for="colabCpf">CPF:</label><input type="text" id="colabCpf" placeholder="Ex: 000.000.000-00"></div>
                     <div class="form-group"><label for="colabTelefone">Telefone:</label><input type="tel" id="colabTelefone" placeholder="Ex: (00) 90000-0000"></div>
                     <div class="form-group"><label for="colabEndereco">Endereço:</label><input type="text" id="colabEndereco" placeholder="Rua, Número, Bairro, Cidade-UF"></div>
+                    <div class="form-group"><label for="colabDataNascimento">Data de Nascimento:</label><input type="date" id="colabDataNascimento"></div>
+                    <div class="form-group"><label for="colabNomeMae">Nome da Mãe:</label><input type="text" id="colabNomeMae"></div>
                     <button id="btnSalvarColaborador" class="btn-success">Salvar Novo Colaborador</button> 
                 </div> 
             </div> 
@@ -652,10 +654,12 @@
                                 <th>CPF</th>
                                 <th>Telefone</th>
                                 <th>Endereço</th>
+                                <th>Nasc.</th>
+                                <th>Nome Mãe</th>
                                 <th>Ações</th> </tr>
                         </thead>
                         <tbody id="colaboradoresTableBody">
-                            <tr><td colspan="8" style="text-align: center; padding: 20px;">Carregando colaboradores...</td></tr>
+                            <tr><td colspan="10" style="text-align: center; padding: 20px;">Carregando colaboradores...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -875,12 +879,12 @@
                             <tr>
                                 <th>Data/Hora</th>
                                 <th>Ação</th>
-                                <th>Usuário</th>
+                                <th>Diária ID</th> <th>Usuário</th>
                                 <th>Detalhes</th>
                             </tr>
                         </thead>
                         <tbody id="historicoTableBody">
-                            <tr><td colspan="4" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>
+                            <tr><td colspan="5" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -896,6 +900,36 @@
                 </p>
                 <div id="regrasPagamentoList">
                     <p style="text-align: center; padding: 20px;">Carregando regras de pagamento...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="screenRelatorioColaboradores" class="screen">
+            <button id="btnRelatorioColaboradoresVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
+            <div class="card">
+                <h2>Relatório de Colaboradores Cadastrados</h2>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nome Completo</th>
+                                <th>Função</th>
+                                <th>Setor</th>
+                                <th>Chave PIX</th>
+                                <th>CPF</th>
+                                <th>Telefone</th>
+                                <th>Endereço</th>
+                                <th>Nasc.</th>
+                                <th>Nome Mãe</th>
+                            </tr>
+                        </thead>
+                        <tbody id="relatorioColaboradoresTableBody">
+                            <tr><td colspan="9" style="text-align: center; padding: 20px;">Carregando colaboradores...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="report-buttons" style="margin-top: 1.5rem;">
+                    <button id="btnGerarRelatorioColaboradoresPdf" class="btn-primary">Gerar PDF dos Colaboradores</button>
                 </div>
             </div>
         </div>
@@ -930,7 +964,8 @@
                 alterarSenha: document.getElementById('screenAlterarSenha'),
                 gerenciarDiarias: document.getElementById('screenGerenciarDiarias'), 
                 historico: document.getElementById('screenHistorico'),
-                gerenciarRegras: document.getElementById('screenGerenciarRegras') // Nova tela de regras
+                gerenciarRegras: document.getElementById('screenGerenciarRegras'), // Nova tela de regras
+                relatorioColaboradores: document.getElementById('screenRelatorioColaboradores') // Nova tela de relatório de colaboradores
             };
 
             const loginEmailInput = document.getElementById('loginEmail'), loginPasswordInput = document.getElementById('loginPassword'), loginButton = document.getElementById('loginButton'), loginErrorMessage = document.getElementById('loginErrorMessage');
@@ -950,6 +985,7 @@
             const colabSetorSelect = document.getElementById('colabSetor'); 
             const colabPixInput = document.getElementById('colabPix');
             const colabCpfInput = document.getElementById('colabCpf'), colabTelefoneInput = document.getElementById('colabTelefone'), colabEnderecoInput = document.getElementById('colabEndereco');
+            const colabDataNascimentoInput = document.getElementById('colabDataNascimento'), colabNomeMaeInput = document.getElementById('colabNomeMae'); // NOVOS DOM
             const colaboradoresTableBody = document.getElementById('colaboradoresTableBody');
             
             // Lançar Diárias
@@ -1027,6 +1063,12 @@
             const btnGerenciarRegrasVoltar = document.getElementById('btnGerenciarRegrasVoltar');
             const regrasPagamentoList = document.getElementById('regrasPagamentoList');
             
+            // Relatório de Colaboradores (NOVOS DOM)
+            const btnGoToRelatorioColaboradores = document.getElementById('btnGoToRelatorioColaboradores');
+            const btnRelatorioColaboradoresVoltar = document.getElementById('btnRelatorioColaboradoresVoltar');
+            const relatorioColaboradoresTableBody = document.getElementById('relatorioColaboradoresTableBody');
+            const btnGerarRelatorioColaboradoresPdf = document.getElementById('btnGerarRelatorioColaboradoresPdf');
+
             // ID do administrador mestre (ATUALIZE ESTE ID com o do seu usuário admin no Supabase!)
             // Isso controla a VISIBILIDADE dos botões de ADMIN no frontend.
             // A SEGURANÇA REAL das operações é controlada pelas Políticas de RLS no Supabase!
@@ -1070,12 +1112,14 @@
                     btnGoToGerenciarDiarias.style.display = 'flex'; 
                     btnGoToHistorico.style.display = 'flex'; 
                     btnGoToGerenciarRegras.style.display = 'flex'; // Botão de Regras visível para Admin
+                    btnGoToRelatorioColaboradores.style.display = 'flex'; // Botão de Relatório de Colaboradores visível para Admin
                 } else {
                     btnGoToCriarLogin.style.display = 'none';
                     btnGoToListarLogins.style.display = 'none';
                     btnGoToGerenciarDiarias.style.display = 'none'; 
                     btnGoToHistorico.style.display = 'none'; 
                     btnGoToGerenciarRegras.style.display = 'none';
+                    btnGoToRelatorioColaboradores.style.display = 'none';
                 }
                 btnGoToAlterarSenha.style.display = 'flex'; 
 
@@ -1125,7 +1169,8 @@
             function renderColaboradores() {
                 colaboradoresTableBody.innerHTML = '';
                 if (colaboradoresCache.length === 0) {
-                    colaboradoresTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Nenhum colaborador cadastrado.</td></tr>';
+                    // Colspan ajustado para 10 (8 campos existentes + Nasc. + Nome Mãe + Ações)
+                    colaboradoresTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px;">Nenhum colaborador cadastrado.</td></tr>';
                     return;
                 }
                 colaboradoresCache.forEach(colab => {
@@ -1138,6 +1183,8 @@
                         <td>${formatCpf(colab.cpf) || 'N/A'}</td>
                         <td>${formatTelefone(colab.telefone) || 'N/A'}</td>
                         <td>${colab.endereco || 'N/A'}</td>
+                        <td>${colab.data_nascimento ? new Date(colab.data_nascimento).toLocaleDateString('pt-BR') : 'N/A'}</td>
+                        <td>${colab.nome_mae || 'N/A'}</td>
                         <td>
                             <button class="btn-secondary btn-sm" data-action="edit" data-id="${colab.id}" style="padding: 5px 10px; font-size: 0.8rem;">Editar</button>
                         </td>
@@ -1166,7 +1213,7 @@
             }
 
             // Função para lidar com o salvamento/atualização de colaborador
-            let editingColaboradorId = null; // Definir aqui
+            let editingColaboradorId = null; 
             async function handleSalvarColaborador() {
                 const nome = colabNomeInput.value.trim();
                 const funcao = colabFuncaoSelect.value.trim(); 
@@ -1175,75 +1222,86 @@
                 const cpf = colabCpfInput.value.replace(/\D/g, ''); // Remove não dígitos para salvar
                 const telefone = colabTelefoneInput.value.replace(/\D/g, ''); // Remove não dígitos para salvar
                 const endereco = colabEnderecoInput.value.trim();
+                const dataNascimento = colabDataNascimentoInput.value; // Novo campo
+                const nomeMae = colabNomeMaeInput.value.trim(); // Novo campo
 
-                if (!nome || !funcao || !setor) {
-                    alert('Por favor, preencha nome, função e setor do colaborador.');
-                    return;
-                }
-                if (funcao === "") { 
-                    alert('Por favor, selecione uma função válida para o colaborador.');
-                    return;
-                }
-                if (setor === "") { 
-                    alert('Por favor, selecione um setor válido para o colaborador.');
-                    return;
-                }
+                // Validação de campos obrigatórios
+                if (!nome) { alert('O campo "Nome Completo" é obrigatório.'); return; }
+                if (funcao === "") { alert('Por favor, selecione uma função válida.'); return; }
+                if (setor === "") { alert('Por favor, selecione um setor válido.'); return; }
+                if (!pix) { alert('O campo "Chave PIX" é obrigatório.'); return; }
+                if (!cpf) { alert('O campo "CPF" é obrigatório.'); return; }
 
                 let response;
-                if (editingColaboradorId) {
-                    // Modo edição
-                    response = await _supabase.from('colaboradores')
-                        .update({ 
-                            nome_completo: nome, 
-                            funcao: funcao, 
-                            setor: setor, 
-                            chave_pix: pix,
-                            cpf: cpf,
-                            telefone: telefone,
-                            endereco: endereco
-                        })
-                        .eq('id', editingColaboradorId)
-                        .select();
-                } else {
-                    // Modo adição
-                    response = await _supabase.from('colaboradores').insert([
-                        { 
-                            nome_completo: nome, 
-                            funcao: funcao, 
-                            setor: setor, 
-                            chave_pix: pix,
-                            cpf: cpf,
-                            telefone: telefone,
-                            endereco: endereco,
-                            ativo: true 
+                try {
+                    if (editingColaboradorId) {
+                        // Modo edição
+                        response = await _supabase.from('colaboradores')
+                            .update({ 
+                                nome_completo: nome, 
+                                funcao: funcao, 
+                                setor: setor, 
+                                chave_pix: pix,
+                                cpf: cpf,
+                                telefone: telefone,
+                                endereco: endereco,
+                                data_nascimento: dataNascimento || null, // Salva como null se vazio
+                                nome_mae: nomeMae || null // Salva como null se vazio
+                            })
+                            .eq('id', editingColaboradorId)
+                            .select();
+                    } else {
+                        // Modo adição
+                        response = await _supabase.from('colaboradores').insert([
+                            { 
+                                nome_completo: nome, 
+                                funcao: funcao, 
+                                setor: setor, 
+                                chave_pix: pix,
+                                cpf: cpf,
+                                telefone: telefone,
+                                endereco: endereco,
+                                data_nascimento: dataNascimento || null,
+                                nome_mae: nomeMae || null,
+                                ativo: true 
+                            }
+                        ]).select();
+                    }
+
+                    const { data, error } = response;
+
+                    if (error) {
+                        if (error.code === '23505' && error.constraint === 'unique_cpf') {
+                            alert(`Erro: O CPF ${formatCpf(cpf)} já está cadastrado.`);
+                        } else {
+                            alert(`Erro ao salvar/atualizar colaborador: ${error.message}`);
+                            console.error("Erro no salvamento/atualização do colaborador:", error);
                         }
-                    ]).select();
-                }
+                    } else {
+                        alert(`Colaborador ${editingColaboradorId ? 'atualizado' : 'salvo'} com sucesso!`);
+                        // Limpar formulário e estado de edição
+                        colabNomeInput.value = '';
+                        colabFuncaoSelect.value = ''; 
+                        colabSetorSelect.value = ''; 
+                        colabPixInput.value = '';
+                        colabCpfInput.value = '';
+                        colabTelefoneInput.value = '';
+                        colabEnderecoInput.value = '';
+                        colabDataNascimentoInput.value = '';
+                        colabNomeMaeInput.value = '';
+                        
+                        editingColaboradorId = null;
+                        colaboradorFormTitle.textContent = 'Adicionar Novo Colaborador';
+                        btnSalvarColaborador.textContent = 'Salvar Novo Colaborador';
+                        btnSalvarColaborador.classList.remove('btn-primary'); 
+                        btnSalvarColaborador.classList.add('btn-success');
 
-                const { data, error } = response;
-
-                if (error) {
-                    alert(`Erro ao salvar/atualizar colaborador: ${error.message}`);
-                    console.error("Erro no salvamento/atualização do colaborador:", error);
-                } else {
-                    alert(`Colaborador ${editingColaboradorId ? 'atualizado' : 'salvo'} com sucesso!`);
-                    // Limpar formulário e estado de edição
-                    colabNomeInput.value = '';
-                    colabFuncaoSelect.value = ''; 
-                    colabSetorSelect.value = ''; 
-                    colabPixInput.value = '';
-                    colabCpfInput.value = '';
-                    colabTelefoneInput.value = '';
-                    colabEnderecoInput.value = '';
-                    
-                    editingColaboradorId = null;
-                    colaboradorFormTitle.textContent = 'Adicionar Novo Colaborador';
-                    btnSalvarColaborador.textContent = 'Salvar Novo Colaborador';
-                    btnSalvarColaborador.classList.remove('btn-primary'); 
-                    btnSalvarColaborador.classList.add('btn-success');
-
-                    showScreen('listarColaboradores'); // Volta para a lista
-                    fetchAndRenderColaboradores(); // Recarrega a lista
+                        showScreen('listarColaboradores'); // Volta para a lista
+                        fetchAndRenderColaboradores(); // Recarrega a lista
+                    }
+                } catch (e) {
+                    alert(`Ocorreu um erro inesperado: ${e.message}`);
+                    console.error("Erro inesperado em handleSalvarColaborador:", e);
                 }
             }
 
@@ -1263,6 +1321,8 @@
                 colabCpfInput.value = formatCpf(colaborador.cpf) || ''; // Formata para exibição
                 colabTelefoneInput.value = formatTelefone(colaborador.telefone) || ''; // Formata para exibição
                 colabEnderecoInput.value = colaborador.endereco || '';
+                colabDataNascimentoInput.value = colaborador.data_nascimento || '';
+                colabNomeMaeInput.value = colaborador.nome_mae || '';
 
                 colaboradorFormTitle.textContent = 'Editar Colaborador Existente';
                 btnSalvarColaborador.textContent = 'Atualizar Colaborador';
@@ -2152,8 +2212,8 @@
 
             // --- Histórico (screenHistorico) ---
             async function showHistoricoScreen() {
-                // Ajustado colspan para 4, removendo coluna Diária ID
-                historicoTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>';
+                // Ajustado colspan para 5, com a coluna Diária ID restaurada
+                historicoTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>';
                 showScreen('historico');
 
                 const { data, error } = await _supabase
@@ -2172,13 +2232,13 @@
 
                 if (error) {
                     console.error("Erro ao buscar histórico:", error.message || error.details || error); 
-                    historicoTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">Erro ao carregar histórico: ${error.message || 'Verifique o console para detalhes.'}</td></tr>`;
+                    historicoTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">Erro ao carregar histórico: ${error.message || 'Verifique o console para detalhes.'}</td></tr>`;
                     return;
                 }
 
                 historicoTableBody.innerHTML = '';
                 if (data.length === 0) {
-                    historicoTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Nenhum registro no histórico.</td></tr>';
+                    historicoTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Nenhum registro no histórico.</td></tr>';
                     return;
                 }
 
@@ -2190,7 +2250,7 @@
                     row.innerHTML = `
                         <td>${recordDate}</td>
                         <td>${record.action.toUpperCase()}</td>
-                        <td>${record.user_email || 'Desconhecido'}</td>
+                        <td>${record.diaria_id ? record.diaria_id.substring(0, 8) + '...' : 'N/A'}</td> <td>${record.user_email || 'Desconhecido'}</td>
                         <td>${actionDetails}</td>
                     `;
                 });
@@ -2417,6 +2477,124 @@
                 e.target.value = formatTelefone(e.target.value);
             });
 
+            // --- NOVO: Relatório de Colaboradores ---
+            async function showRelatorioColaboradoresScreen() {
+                relatorioColaboradoresTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">Carregando colaboradores...</td></tr>';
+                showScreen('relatorioColaboradores');
+                
+                const { data, error } = await _supabase.from('colaboradores').select('*').order('nome_completo');
+                if (error) {
+                    console.error("Erro ao buscar colaboradores para relatório:", error);
+                    alert("Erro ao carregar colaboradores para relatório.");
+                    relatorioColaboradoresTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">Erro ao carregar colaboradores.</td></tr>';
+                    return;
+                }
+
+                if (data.length === 0) {
+                    relatorioColaboradoresTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">Nenhum colaborador cadastrado.</td></tr>';
+                    return;
+                }
+
+                relatorioColaboradoresTableBody.innerHTML = '';
+                data.forEach(colab => {
+                    const row = relatorioColaboradoresTableBody.insertRow();
+                    row.innerHTML = `
+                        <td>${colab.nome_completo}</td>
+                        <td>${colab.funcao}</td>
+                        <td>${colab.setor}</td>
+                        <td>${colab.chave_pix || 'N/A'}</td>
+                        <td>${formatCpf(colab.cpf) || 'N/A'}</td>
+                        <td>${formatTelefone(colab.telefone) || 'N/A'}</td>
+                        <td>${colab.endereco || 'N/A'}</td>
+                        <td>${colab.data_nascimento ? new Date(colab.data_nascimento).toLocaleDateString('pt-BR') : 'N/A'}</td>
+                        <td>${colab.nome_mae || 'N/A'}</td>
+                    `;
+                });
+            }
+
+            async function gerarRelatorioColaboradoresPdf() {
+                const { data: colaboradoresData, error } = await _supabase.from('colaboradores').select('*').order('nome_completo');
+                if (error) {
+                    console.error("Erro ao buscar colaboradores para PDF:", error);
+                    alert("Erro ao gerar PDF de colaboradores.");
+                    return;
+                }
+
+                if (colaboradoresData.length === 0) {
+                    alert('Nenhum colaborador para gerar relatório.');
+                    return;
+                }
+
+                const doc = new jsPDF('landscape'); // 'landscape' para mais colunas
+                const defaultMargin = 15;
+                const usableWidth = doc.internal.pageSize.getWidth() - (defaultMargin * 2);
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(20);
+                doc.setTextColor(52, 58, 64);
+                doc.text("Relatório de Colaboradores Cadastrados", doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                doc.setTextColor(108, 117, 125);
+                const now = new Date();
+                const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'America/Fortaleza' };
+                const generatedDateTime = now.toLocaleString('pt-BR', options);
+                doc.text(`Gerado em: ${generatedDateTime}`, doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
+
+                doc.autoTable({
+                    startY: 35,
+                    head: [['Nome Completo', 'Função', 'Setor', 'PIX', 'CPF', 'Telefone', 'Endereço', 'Nasc.', 'Nome Mãe']],
+                    body: colaboradoresData.map(colab => [
+                        colab.nome_completo,
+                        colab.funcao,
+                        colab.setor,
+                        colab.chave_pix || '',
+                        formatCpf(colab.cpf) || '',
+                        formatTelefone(colab.telefone) || '',
+                        colab.endereco || '',
+                        colab.data_nascimento ? new Date(colab.data_nascimento).toLocaleDateString('pt-BR') : '',
+                        colab.nome_mae || ''
+                    ]),
+                    theme: 'striped',
+                    styles: {
+                        fontSize: 8, // Fonte menor para caber mais
+                        cellPadding: 2,
+                        overflow: 'linebreak',
+                        font: "helvetica",
+                        textColor: [52, 58, 64],
+                    },
+                    headStyles: {
+                        fillColor: [63, 106, 216],
+                        textColor: 255,
+                        fontStyle: 'bold',
+                        fontSize: 9,
+                    },
+                    alternateRowStyles: { fillColor: [248, 249, 250] },
+                    margin: { horizontal: defaultMargin },
+                    columnStyles: {
+                        0: { cellWidth: usableWidth * 0.18 }, // Nome
+                        1: { cellWidth: usableWidth * 0.10 }, // Função
+                        2: { cellWidth: usableWidth * 0.10 }, // Setor
+                        3: { cellWidth: usableWidth * 0.12 }, // PIX
+                        4: { cellWidth: usableWidth * 0.12 }, // CPF
+                        5: { cellWidth: usableWidth * 0.12 }, // Telefone
+                        6: { cellWidth: usableWidth * 0.16 }, // Endereço
+                        7: { cellWidth: usableWidth * 0.05 }, // Nasc.
+                        8: { cellWidth: usableWidth * 0.05 }  // Nome Mãe
+                    },
+                    didDrawPage: function (data) {
+                        let str = "Página " + doc.internal.getNumberOfPages();
+                        doc.setFontSize(10);
+                        doc.setTextColor(108, 117, 125);
+                        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
+                    }
+                });
+
+                doc.save(`Relatorio_Colaboradores_${new Date().toLocaleDateString('pt-BR')}.pdf`);
+                alert('Relatório de Colaboradores PDF gerado com sucesso!');
+            }
+
 
             // --- INICIALIZAÇÃO E LISTENERS GERAIS ---
             async function initializeApp() {
@@ -2441,6 +2619,8 @@
                     colabCpfInput.value = ''; 
                     colabTelefoneInput.value = ''; 
                     colabEnderecoInput.value = '';
+                    colabDataNascimentoInput.value = '';
+                    colabNomeMaeInput.value = '';
                     editingColaboradorId = null; 
                     colaboradorFormTitle.textContent = 'Adicionar Novo Colaborador';
                     btnSalvarColaborador.textContent = 'Salvar Novo Colaborador';
@@ -2536,6 +2716,11 @@
                 // Gerenciar Regras de Pagamento (NOVO)
                 btnGoToGerenciarRegras.addEventListener('click', showGerenciarRegrasScreen);
                 btnGerenciarRegrasVoltar.addEventListener('click', () => showScreen('dashboard'));
+
+                // NOVO: Relatório de Colaboradores
+                btnGoToRelatorioColaboradores.addEventListener('click', showRelatorioColaboradoresScreen);
+                btnRelatorioColaboradoresVoltar.addEventListener('click', () => showScreen('dashboard'));
+                btnGerarRelatorioColaboradoresPdf.addEventListener('click', gerarRelatorioColaboradoresPdf);
                 
                 // Inicialização da sessão
                 const { data: { session } } = await _supabase.auth.getSession();
