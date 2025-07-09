@@ -236,7 +236,7 @@
             box-shadow: var(--shadow-subtle);
         }
         .admin-button:hover {
-            transform: translateY(-3px); 
+            transform: translateY(-2px); 
             box-shadow: var(--shadow-medium);
             background-color: var(--color-background-light); 
         }
@@ -596,6 +596,16 @@
                                 <circle cx="12" cy="12" r="3"/>
                             </svg>
                             <span>Regras de Diária</span>
+                        </button>
+
+                        <button id="btnGoToRelatorioColaboradores" class="admin-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users-round">
+                                <path d="M18 21a8 8 0 0 0-16 0"/>
+                                <circle cx="10" cy="8" r="5"/>
+                                <path d="M22 21a8 8 0 0 0-16 0"/>
+                                <circle cx="14" cy="8" r="5"/>
+                            </svg>
+                            <span>Relat. Colab.</span>
                         </button>
 
                     </div>
@@ -1106,22 +1116,23 @@
                 userEmailDisplay.textContent = user.email;
 
                 // Visibilidade de botões de ADMIN (controlada por RLS no backend para segurança real)
+                // Adicionado safe check para cada botão
                 if (user.id === ADMIN_USER_ID) { 
-                    btnGoToCriarLogin.style.display = 'flex'; 
-                    btnGoToListarLogins.style.display = 'flex';
-                    btnGoToGerenciarDiarias.style.display = 'flex'; 
-                    btnGoToHistorico.style.display = 'flex'; 
-                    btnGoToGerenciarRegras.style.display = 'flex'; // Botão de Regras visível para Admin
-                    btnGoToRelatorioColaboradores.style.display = 'flex'; // Botão de Relatório de Colaboradores visível para Admin
+                    if(btnGoToCriarLogin) btnGoToCriarLogin.style.display = 'flex'; 
+                    if(btnGoToListarLogins) btnGoToListarLogins.style.display = 'flex';
+                    if(btnGoToGerenciarDiarias) btnGoToGerenciarDiarias.style.display = 'flex'; 
+                    if(btnGoToHistorico) btnGoToHistorico.style.display = 'flex'; 
+                    if(btnGoToGerenciarRegras) btnGoToGerenciarRegras.style.display = 'flex'; 
+                    if(btnGoToRelatorioColaboradores) btnGoToRelatorioColaboradores.style.display = 'flex'; 
                 } else {
-                    btnGoToCriarLogin.style.display = 'none';
-                    btnGoToListarLogins.style.display = 'none';
-                    btnGoToGerenciarDiarias.style.display = 'none'; 
-                    btnGoToHistorico.style.display = 'none'; 
-                    btnGoToGerenciarRegras.style.display = 'none';
-                    btnGoToRelatorioColaboradores.style.display = 'none';
+                    if(btnGoToCriarLogin) btnGoToCriarLogin.style.display = 'none';
+                    if(btnGoToListarLogins) btnGoToListarLogins.style.display = 'none';
+                    if(btnGoToGerenciarDiarias) btnGoToGerenciarDiarias.style.display = 'none'; 
+                    if(btnGoToHistorico) btnGoToHistorico.style.display = 'none'; 
+                    if(btnGoToGerenciarRegras) btnGoToGerenciarRegras.style.display = 'none';
+                    if(btnGoToRelatorioColaboradores) btnGoToRelatorioColaboradores.style.display = 'none';
                 }
-                btnGoToAlterarSenha.style.display = 'flex'; 
+                if(btnGoToAlterarSenha) btnGoToAlterarSenha.style.display = 'flex'; 
 
                 showScreen('dashboard');
             }
@@ -1225,12 +1236,13 @@
                 const dataNascimento = colabDataNascimentoInput.value; // Novo campo
                 const nomeMae = colabNomeMaeInput.value.trim(); // Novo campo
 
-                // Validação de campos obrigatórios
+                // Validação de campos obrigatórios (frontend)
                 if (!nome) { alert('O campo "Nome Completo" é obrigatório.'); return; }
                 if (funcao === "") { alert('Por favor, selecione uma função válida.'); return; }
                 if (setor === "") { alert('Por favor, selecione um setor válido.'); return; }
                 if (!pix) { alert('O campo "Chave PIX" é obrigatório.'); return; }
                 if (!cpf) { alert('O campo "CPF" é obrigatório.'); return; }
+
 
                 let response;
                 try {
@@ -1271,8 +1283,9 @@
                     const { data, error } = response;
 
                     if (error) {
-                        if (error.code === '23505' && error.constraint === 'unique_cpf') {
-                            alert(`Erro: O CPF ${formatCpf(cpf)} já está cadastrado.`);
+                        // Tratamento de erro específico para CPF duplicado (unique_cpf)
+                        if (error.code === '23505' && error.message.includes('unique_cpf')) {
+                            alert(`Erro: O CPF ${formatCpf(cpf)} já está cadastrado para outro colaborador.`);
                         } else {
                             alert(`Erro ao salvar/atualizar colaborador: ${error.message}`);
                             console.error("Erro no salvamento/atualização do colaborador:", error);
@@ -1586,8 +1599,8 @@
                 const tabelaPagamentosData = Object.keys(pagamentosPorColaborador).map(nome => {
                     return {
                         nome: nome,
-                        pix: pagamentosPorColaborador[nome].pix, // Correção aqui
-                        total: pagamentosPorColaborador[nome].total // Correção aqui
+                        pix: pagamentosPorColaborador[nome].pix, 
+                        total: pagamentosPorColaborador[nome].total 
                     };
                 }).sort((a, b) => a.nome.localeCompare(b.nome));
 
@@ -1775,7 +1788,7 @@
                         if (data.section === 'head' && data.column.index === 0) {
                             data.cell.styles.halign = 'left';
                         }
-                        // CORRIGIDO: Alinha "TOTAL GERAL" à ESQUERDA na primeira coluna do rodapé
+                        // CORRIGIDO: Alinha "TOTAL GERAL" à ESQUERDA na primeira coluna do rodapé (restaurado)
                         if (data.section === 'foot') {
                             if (data.column.index === 0) { 
                                 data.cell.styles.halign = 'left'; 
@@ -1824,7 +1837,15 @@
                 // Título
                 ws_data.push(["Relatório de Diárias"]);
                 ws_data.push([`Período: ${new Date(periodo.inicio).toLocaleDateString('pt-BR')}' a '${new Date(periodo.fim).toLocaleDateString('pt-BR')}`]);
-                ws_data.push([`Gerado em: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })}`]);
+                // Adicionado tempo de Fortaleza para a data de geração
+                const now = new Date();
+                const options = {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                    hour12: false,
+                    timeZone: 'America/Fortaleza' 
+                };
+                ws_data.push([`Gerado em: ${now.toLocaleString('pt-BR', options)}`]);
                 ws_data.push([]); // Linha em branco
                 
                 // Tabela de Pagamentos por Colaborador
