@@ -735,7 +735,6 @@
                 </div>
                 <div class="report-buttons">
                     <button id="btnVerResumo" class="btn-primary">Ver Resumo na Tela</button>
-                    <button id="btnGerarRelatorioPdf" class="btn-primary">Gerar PDF</button>
                     <button id="btnGerarRelatorioXlsx" class="btn-success">Gerar XLSX</button>
                 </div>
 
@@ -950,7 +949,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // SUAS CREDENCIAIS SUPABASE AQUI!
             const SUPABASE_URL = 'https://pbgnhcwspgvqcwlbbxle.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZ25oY3dzcGd2cWN3bGJieGxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNTQwNjksImV4cCI6MjA2NjkzMDA2OX0.9wOVZGObGwmL5T1qLkxOA2Ktm9TmW-zBPQnyn94vYSo';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZ25oY3dzcGd2cWN3bGJieGxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNTQwNjksImV4cCI6MjA2NjkzMDA2OX0.9wOVZGObGwmL5T1qLkxOA2Ktm9C9o'; // Atualize para sua chave anon de produção
             const { createClient } = supabase;
             const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             let currentUser = null;
@@ -1010,7 +1009,6 @@
             const relatorioDataInicioInput = document.getElementById('relatorioDataInicio');
             const relatorioDataFimInput = document.getElementById('relatorioDataFim');
             const btnVerResumo = document.getElementById('btnVerResumo'); 
-            const btnGerarRelatorioPdf = document.getElementById('btnGerarRelatorioPdf');
             const btnGerarRelatorioXlsx = document.getElementById('btnGerarRelatorioXlsx'); 
             const resumoPagamentosDiv = document.getElementById('resumoPagamentos'); 
             const resumoPagamentosBody = document.getElementById('resumoPagamentosBody'); 
@@ -1648,166 +1646,7 @@
                 resumoGastosDiv.style.display = 'block';
             }
 
-            // Função para gerar PDF (melhorada com a função de processamento)
-            async function gerarRelatorioPdf() {
-                const dataInicio = relatorioDataInicioInput.value;
-                const dataFim = relatorioDataFimInput.value;
-
-                if (!dataInicio || !dataFim) {
-                    alert('Por favor, selecione as datas de início e fim para o relatório.');
-                    return;
-                }
-                
-                const dadosProcessados = await processarDadosRelatorio(dataInicio, dataFim);
-                if (!dadosProcessados) return; // Se não houver dados ou erro, sai
-
-                const { pagamentos, gastos, totalGeral, periodo } = dadosProcessados;
-
-                // Prepara os dados para autoTable
-                const tabelaPagamentosPDF = pagamentos.map(p => [p.nome, p.pix, `R$ ${p.total.toFixed(2).replace('.', ',')}`]);
-                const tabelaGastosPDF = gastos.map(g => [g.setor, `R$ ${g.total.toFixed(2).replace('.', ',')}`]);
-
-                // --- Geração do PDF ---
-                const doc = new jsPDF();
-                const defaultMargin = 15; 
-                const usableWidth = doc.internal.pageSize.getWidth() - (defaultMargin * 2); 
-                
-                const sectionTitleX = defaultMargin; 
-
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(22);
-                doc.setTextColor(52, 58, 64); 
-                doc.text("Relatório de Diárias", doc.internal.pageSize.getWidth() / 2, 25, { align: "center" });
-
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(12);
-                doc.setTextColor(108, 117, 125); 
-                const startDateFormatted = new Date(periodo.inicio + 'T00:00:00').toLocaleDateString('pt-BR');
-                const endDateFormatted = new Date(periodo.fim + 'T00:00:00').toLocaleDateString('pt-BR');
-                doc.text(`Período: ${startDateFormatted} a ${endDateFormatted}`, doc.internal.pageSize.getWidth() / 2, 35, { align: "center" });
-                
-                const now = new Date();
-                const options = {
-                    year: 'numeric', month: '2-digit', day: '2-digit',
-                    hour: '2-digit', minute: '2-digit', second: '2-digit',
-                    hour12: false, 
-                    timeZone: 'America/Fortaleza' 
-                };
-                const generatedDateTime = now.toLocaleString('pt-BR', options);
-                doc.text(`Gerado em: ${generatedDateTime}`, doc.internal.pageSize.getWidth() / 2, 42, { align: "center" });
-
-                let yPos = 60; 
-
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(16);
-                doc.setTextColor(52, 58, 64);
-                doc.text("Pagamentos por Colaborador", sectionTitleX, yPos); 
-                yPos += 10;
-                doc.autoTable({
-                    startY: yPos,
-                    head: [['Nome Completo', 'Chave PIX', 'Valor Total']],
-                    body: tabelaPagamentosPDF,
-                    theme: 'striped',
-                    styles: { 
-                        fontSize: 10, 
-                        cellPadding: 3, 
-                        overflow: 'linebreak',
-                        font: "helvetica", 
-                        textColor: [52, 58, 64],
-                    },
-                    headStyles: { 
-                        fillColor: [63, 106, 216], 
-                        textColor: 255, 
-                        fontStyle: 'bold',
-                        fontSize: 11,
-                    },
-                    bodyStyles: { textColor: [33, 37, 41] },
-                    alternateRowStyles: { fillColor: [248, 249, 250] },
-                    margin: { horizontal: defaultMargin }, 
-                    // Ajuste de largura de colunas para PDF
-                    columnStyles: {
-                        0: { halign: 'left', cellWidth: usableWidth * 0.45 }, // Nome Completo (45%)
-                        1: { halign: 'left', cellWidth: usableWidth * 0.30 }, // Chave PIX (30%)
-                        2: { halign: 'right', cellWidth: usableWidth * 0.25 } // Valor Total (25%)
-                    },
-                    didParseCell: function(data) {
-                        if (data.section === 'head' && data.column.index === 0) {
-                            data.cell.styles.halign = 'left';
-                        }
-                    },
-                    didDrawPage: function (data) {
-                        let str = "Página " + doc.internal.getNumberOfPages();
-                        doc.setFontSize(10);
-                        doc.setTextColor(108, 117, 125);
-                        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
-                    }
-                });
-
-                yPos = doc.autoTable.previous.finalY + 20; 
-
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(16);
-                doc.setTextColor(52, 58, 64);
-                doc.text("Gastos por Setor", sectionTitleX, yPos); 
-                yPos += 10;
-                doc.autoTable({
-                    startY: yPos,
-                    head: [['Setor', 'Valor Total']],
-                    body: tabelaGastosPDF,
-                    theme: 'striped',
-                    styles: { 
-                        fontSize: 10, 
-                        cellPadding: 3, 
-                        overflow: 'linebreak',
-                        font: "helvetica",
-                        textColor: [52, 58, 64],
-                    },
-                    headStyles: { 
-                        fillColor: [40, 167, 69], 
-                        textColor: 255, 
-                        fontStyle: 'bold',
-                        fontSize: 11,
-                    },
-                    bodyStyles: { textColor: [33, 37, 41] },
-                    alternateRowStyles: { fillColor: [248, 249, 250] },
-                    margin: { horizontal: defaultMargin }, 
-                    // Ajuste de largura de colunas para PDF
-                    columnStyles: {
-                        0: { halign: 'left', cellWidth: usableWidth * 0.70 }, // Setor (70%)
-                        1: { halign: 'right', cellWidth: usableWidth * 0.30 } // Valor Total (30%)
-                    },
-                    foot: [['TOTAL GERAL', `R$ ${totalGeral.toFixed(2).replace('.', ',')}`]], 
-                    footStyles: {
-                        fillColor: [52, 58, 64], 
-                        textColor: 255,
-                        fontStyle: 'bold',
-                        fontSize: 11,
-                        cellPadding: 4 
-                    },
-                    didParseCell: function(data) {
-                        if (data.section === 'head' && data.column.index === 0) {
-                            data.cell.styles.halign = 'left';
-                        }
-                        // CORRIGIDO: Alinha "TOTAL GERAL" à ESQUERDA na primeira coluna do rodapé (restaurado)
-                        if (data.section === 'foot') {
-                            if (data.column.index === 0) { 
-                                data.cell.styles.halign = 'left'; 
-                            } else if (data.column.index === 1) { 
-                                data.cell.styles.halign = 'right'; 
-                            }
-                        }
-                    },
-                    didDrawPage: function (data) {
-                        let str = "Página " + doc.internal.getNumberOfPages();
-                        doc.setFontSize(10);
-                        doc.setTextColor(108, 117, 125);
-                        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
-                    }
-                });
-
-                const filename = `Relatorio_Diarias_${periodo.inicio}_a_${periodo.fim}.pdf`;
-                doc.save(filename);
-            }
+            // REMOVIDO: Função para gerar PDF de Diárias (a pedido do usuário)
 
             // Função para gerar XLSX
             async function gerarRelatorioXlsx() {
@@ -1834,9 +1673,11 @@
                 // Dados para a planilha
                 const ws_data = [];
 
-                // Título
+                // Título e Período
                 ws_data.push(["Relatório de Diárias"]);
-                ws_data.push([`Período: ${new Date(periodo.inicio).toLocaleDateString('pt-BR')}' a '${new Date(periodo.fim).toLocaleDateString('pt-BR')}`]);
+                ws_data.push([]); // Linha em branco para separação
+                ws_data.push([`Período: ${new Date(periodo.inicio).toLocaleDateString('pt-BR')} a ${new Date(periodo.fim).toLocaleDateString('pt-BR')}`]);
+                
                 // Adicionado tempo de Fortaleza para a data de geração
                 const now = new Date();
                 const options = {
@@ -1846,26 +1687,31 @@
                     timeZone: 'America/Fortaleza' 
                 };
                 ws_data.push([`Gerado em: ${now.toLocaleString('pt-BR', options)}`]);
-                ws_data.push([]); // Linha em branco
-                
+                ws_data.push([]); // Linha em branco para separação
+                ws_data.push([]); // Mais uma linha em branco para melhor separação
+
                 // Tabela de Pagamentos por Colaborador
-                ws_data.push(["Pagamentos por Colaborador"]);
-                ws_data.push(["Nome Completo", "Chave PIX", "Valor Total"]);
+                ws_data.push(["Pagamentos por Colaborador"]); // Título da seção
+                ws_data.push([]); // Linha em branco
+                ws_data.push(["Nome Completo", "Chave PIX", "Valor Total"]); // Cabeçalhos da tabela
                 pagamentos.forEach(p => {
-                    ws_data.push([p.nome, p.pix, p.total]);
+                    ws_data.push([p.nome, p.pix, parseFloat(p.total)]); // Passa o total como número
                 });
                 ws_data.push([]); // Linha em branco
+                ws_data.push([]); // Mais uma linha em branco para melhor separação
 
                 // Tabela de Gastos por Setor
-                ws_data.push(["Gastos por Setor"]);
-                ws_data.push(["Setor", "Valor Total"]);
+                ws_data.push(["Gastos por Setor"]); // Título da seção
+                ws_data.push([]); // Linha em branco
+                ws_data.push(["Setor", "Valor Total"]); // Cabeçalhos da tabela
                 gastos.forEach(g => {
-                    ws_data.push([g.setor, g.total]);
+                    ws_data.push([g.setor, parseFloat(g.total)]); // Passa o total como número
                 });
                 ws_data.push([]); // Linha em branco
+                ws_data.push([]); // Mais uma linha em branco para melhor separação
 
                 // Total Geral
-                ws_data.push(["TOTAL GERAL", totalGeral]);
+                ws_data.push(["TOTAL GERAL", parseFloat(totalGeral)]); // Passa o total como número
 
                 console.log("Dados finais para a planilha XLSX:", ws_data);
 
@@ -2593,6 +2439,7 @@
                     },
                     alternateRowStyles: { fillColor: [248, 249, 250] },
                     margin: { horizontal: defaultMargin },
+                    // Ajuste de largura de colunas para PDF
                     columnStyles: {
                         0: { cellWidth: usableWidth * 0.18 }, // Nome
                         1: { cellWidth: usableWidth * 0.10 }, // Função
@@ -2628,11 +2475,11 @@
                 loginPasswordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
                 
                 // Colaboradores
-                btnGoToListarColaboradores.addEventListener('click', async () => {
+                if(btnGoToListarColaboradores) btnGoToListarColaboradores.addEventListener('click', async () => {
                     await fetchAndRenderColaboradores();
                     showScreen('listarColaboradores');
                 });
-                btnGoToAdicionarColaborador.addEventListener('click', () => {
+                if(btnGoToAdicionarColaborador) btnGoToAdicionarColaborador.addEventListener('click', () => {
                     colabNomeInput.value = ''; 
                     colabFuncaoSelect.value = ''; 
                     colabSetorSelect.value = ''; 
@@ -2649,27 +2496,27 @@
                     btnSalvarColaborador.classList.add('btn-success');
                     showScreen('adicionarColaborador');
                 });
-                btnAdicionarColabVoltar.addEventListener('click', () => showScreen('listarColaboradores')); 
-                btnListarColabVoltar.addEventListener('click', () => showScreen('dashboard')); 
-                btnSalvarColaborador.addEventListener('click', handleSalvarColaborador);
+                if(btnAdicionarColabVoltar) btnAdicionarColabVoltar.addEventListener('click', () => showScreen('listarColaboradores')); 
+                if(btnListarColabVoltar) btnListarColabVoltar.addEventListener('click', () => showScreen('dashboard')); 
+                if(btnSalvarColaborador) btnSalvarColaborador.addEventListener('click', handleSalvarColaborador);
                 
                 // Lançamento de Diárias
-                btnGoToLancarDiaria.addEventListener('click', showLancarDiariasScreen);
-                btnLancarDiariasVoltar.addEventListener('click', () => showScreen('dashboard')); 
+                if(btnGoToLancarDiaria) btnGoToLancarDiaria.addEventListener('click', showLancarDiariasScreen);
+                if(btnLancarDiariasVoltar) btnLancarDiariasVoltar.addEventListener('click', () => showScreen('dashboard')); 
                 diariaColaboradorSelect.addEventListener('change', () => toggleDiariaFields(false));
                 diariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(false));
                 diariaHoraEntradaInput.addEventListener('change', () => calculateAndSetDiariaValue(false)); 
                 diariaHoraSaidaInput.addEventListener('change', () => calculateAndSetDiariaValue(false)); 
-                btnSalvarDiaria.addEventListener('click', handleSalvarDiaria);
+                if(btnSalvarDiaria) btnSalvarDiaria.addEventListener('click', handleSalvarDiaria);
                 
                 // Relatórios
-                btnGoToRelatorios.addEventListener('click', showRelatoriosScreen);
-                btnRelatoriosVoltar.addEventListener('click', () => {
+                if(btnGoToRelatorios) btnGoToRelatorios.addEventListener('click', showRelatoriosScreen);
+                if(btnRelatoriosVoltar) btnRelatoriosVoltar.addEventListener('click', () => {
                     resumoPagamentosDiv.style.display = 'none';
                     resumoGastosDiv.style.display = 'none';
                     showScreen('dashboard');
                 });
-                btnVerResumo.addEventListener('click', async () => {
+                if(btnVerResumo) btnVerResumo.addEventListener('click', async () => {
                     const dataInicio = relatorioDataInicioInput.value;
                     const dataFim = relatorioDataFimInput.value;
                     if (!dataInicio || !dataFim) {
@@ -2684,46 +2531,46 @@
                         resumoGastosDiv.style.display = 'none';
                     }
                 });
-                btnGerarRelatorioPdf.addEventListener('click', gerarRelatorioPdf);
-                btnGerarRelatorioXlsx.addEventListener('click', gerarRelatorioXlsx);
+                // REMOVIDO: Event Listener para gerarRelatorioPdf
+                if(btnGerarRelatorioXlsx) btnGerarRelatorioXlsx.addEventListener('click', gerarRelatorioXlsx);
 
                 // Criação de Login
-                btnGoToCriarLogin.addEventListener('click', () => {
+                if(btnGoToCriarLogin) btnGoToCriarLogin.addEventListener('click', () => {
                     createUserEmailInput.value = '';
                     generatedPasswordDisplay.value = ''; 
                     createUserErrorMessage.style.display = 'none';
                     showScreen('criarLogin');
                 });
-                btnCriarLoginVoltar.addEventListener('click', () => showScreen('dashboard'));
-                btnCreateUser.addEventListener('click', handleCreateUser);
+                if(btnCriarLoginVoltar) btnCriarLoginVoltar.addEventListener('click', () => showScreen('dashboard'));
+                if(btnCreateUser) btnCreateUser.addEventListener('click', handleCreateUser);
                 createUserEmailInput.addEventListener('keypress', (e) => { 
                     if (e.key === 'Enter') handleCreateUser(); 
                 });
                 
                 // Listar Logins
-                btnGoToListarLogins.addEventListener('click', showListarLoginsScreen);
-                btnListarLoginsVoltar.addEventListener('click', () => showScreen('dashboard'));
+                if(btnGoToListarLogins) btnGoToListarLogins.addEventListener('click', showListarLoginsScreen);
+                if(btnListarLoginsVoltar) btnListarLoginsVoltar.addEventListener('click', () => showScreen('dashboard'));
 
                 // Alterar Senha
-                btnGoToAlterarSenha.addEventListener('click', () => {
+                if(btnGoToAlterarSenha) btnGoToAlterarSenha.addEventListener('click', () => {
                     currentPasswordInput.value = '';
                     newPasswordInput.value = '';
                     confirmNewPasswordInput.value = '';
                     changePasswordErrorMessage.style.display = 'none';
                     showScreen('alterarSenha');
                 });
-                btnAlterarSenhaVoltar.addEventListener('click', () => showScreen('dashboard'));
-                btnChangePassword.addEventListener('click', handleChangePassword);
+                if(btnAlterarSenhaVoltar) btnAlterarSenhaVoltar.addEventListener('click', () => showScreen('dashboard'));
+                if(btnChangePassword) btnChangePassword.addEventListener('click', handleChangePassword);
                 confirmNewPasswordInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') handleChangePassword();
                 });
 
                 // Gerenciar Diárias
-                btnGoToGerenciarDiarias.addEventListener('click', showGerenciarDiariasScreen);
-                btnGerenciarDiariasVoltar.addEventListener('click', () => showScreen('dashboard'));
-                closeEditModalButton.addEventListener('click', () => editDiariaModal.classList.remove('active'));
-                cancelEditDiariaButton.addEventListener('click', () => editDiariaModal.classList.remove('active'));
-                saveEditDiariaButton.addEventListener('click', handleSaveEditDiaria);
+                if(btnGoToGerenciarDiarias) btnGoToGerenciarDiarias.addEventListener('click', showGerenciarDiariasScreen);
+                if(btnGerenciarDiariasVoltar) btnGerenciarDiariasVoltar.addEventListener('click', () => showScreen('dashboard'));
+                if(closeEditModalButton) closeEditModalButton.addEventListener('click', () => editDiariaModal.classList.remove('active'));
+                if(cancelEditDiariaButton) cancelEditDiariaButton.addEventListener('click', () => editDiariaModal.classList.remove('active'));
+                if(saveEditDiariaButton) saveEditDiariaButton.addEventListener('click', handleSaveEditDiaria);
                 window.addEventListener('click', (event) => {
                     if (event.target == editDiariaModal) {
                         editDiariaModal.classList.remove('active');
@@ -2731,17 +2578,17 @@
                 });
 
                 // Histórico
-                btnGoToHistorico.addEventListener('click', showHistoricoScreen);
-                btnHistoricoVoltar.addEventListener('click', () => showScreen('dashboard'));
+                if(btnGoToHistorico) btnGoToHistorico.addEventListener('click', showHistoricoScreen);
+                if(btnHistoricoVoltar) btnHistoricoVoltar.addEventListener('click', () => showScreen('dashboard'));
 
                 // Gerenciar Regras de Pagamento (NOVO)
-                btnGoToGerenciarRegras.addEventListener('click', showGerenciarRegrasScreen);
-                btnGerenciarRegrasVoltar.addEventListener('click', () => showScreen('dashboard'));
+                if(btnGoToGerenciarRegras) btnGoToGerenciarRegras.addEventListener('click', showGerenciarRegrasScreen);
+                if(btnGerenciarRegrasVoltar) btnGerenciarRegrasVoltar.addEventListener('click', () => showScreen('dashboard'));
 
                 // NOVO: Relatório de Colaboradores
-                btnGoToRelatorioColaboradores.addEventListener('click', showRelatorioColaboradoresScreen);
-                btnRelatorioColaboradoresVoltar.addEventListener('click', () => showScreen('dashboard'));
-                btnGerarRelatorioColaboradoresPdf.addEventListener('click', gerarRelatorioColaboradoresPdf);
+                if(btnGoToRelatorioColaboradores) btnGoToRelatorioColaboradores.addEventListener('click', showRelatorioColaboradoresScreen);
+                if(btnRelatorioColaboradoresVoltar) btnRelatorioColaboradoresVoltar.addEventListener('click', () => showScreen('dashboard'));
+                if(btnGerarRelatorioColaboradoresPdf) btnGerarRelatorioColaboradoresPdf.addEventListener('click', gerarRelatorioColaboradoresPdf);
                 
                 // Inicialização da sessão
                 const { data: { session } } = await _supabase.auth.getSession();
