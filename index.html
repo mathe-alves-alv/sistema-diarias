@@ -1391,7 +1391,7 @@
                     hora_saida: diariaHoraSaidaInput.value || null
                 };
 
-                const { data, error } = await _supabase.from('diarias').insert([diariaData]).select().single();
+                const { data, error } = await _supabase.from('diarias_lancadas').insert([diariaData]).select().single();
                 if (error) {
                     console.error("Erro ao salvar diária:", error);
                     alert(`Erro ao salvar diária: ${error.message}`);
@@ -1412,7 +1412,7 @@
             }
 
             async function processarDadosRelatorio(dataInicio, dataFim) {
-                const { data: diarias, error } = await _supabase.from('diarias')
+                const { data: diarias, error } = await _supabase.from('diarias_lancadas')
                     .select(`*, colaboradores(nome_completo, chave_pix)`)
                     .gte('data_diaria', dataInicio)
                     .lte('data_diaria', dataFim);
@@ -1598,7 +1598,7 @@
             async function showGerenciarDiariasScreen() {
                 gerenciarDiariasTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Carregando diárias...</td></tr>';
                 showScreen('gerenciarDiarias');
-                const { data, error } = await _supabase.from('diarias')
+                const { data, error } = await _supabase.from('diarias_lancadas')
                     .select(`*, colaboradores(nome_completo)`)
                     .order('data_diaria', { ascending: false })
                     .limit(50); // Limita a 50 mais recentes para performance
@@ -1638,7 +1638,7 @@
 
             async function handleEditDiaria(event) {
                 const diariaId = event.target.dataset.id;
-                const { data, error } = await _supabase.from('diarias').select(`*, colaboradores(nome_completo)`).eq('id', diariaId).single();
+                const { data, error } = await _supabase.from('diarias_lancadas').select(`*, colaboradores(nome_completo)`).eq('id', diariaId).single();
                 if (error) {
                     alert("Erro ao carregar dados da diária.");
                     console.error(error);
@@ -1673,13 +1673,13 @@
                     hora_saida: editDiariaHoraSaidaInput.value || null,
                 };
 
-                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias').select('*, colaboradores(nome_completo)').eq('id', diariaId).single();
+                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('*, colaboradores(nome_completo)').eq('id', diariaId).single();
                 if (fetchError) {
                     alert("Erro ao buscar dados antigos da diária para log.");
                     return;
                 }
 
-                const { data, error } = await _supabase.from('diarias').update(updatedData).eq('id', diariaId).select().single();
+                const { data, error } = await _supabase.from('diarias_lancadas').update(updatedData).eq('id', diariaId).select().single();
                 if (error) {
                     alert("Erro ao salvar alterações.");
                     console.error(error);
@@ -1698,13 +1698,13 @@
                     return;
                 }
 
-                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias').select('*, colaboradores(nome_completo)').eq('id', diariaId).single();
+                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('*, colaboradores(nome_completo)').eq('id', diariaId).single();
                  if (fetchError) {
                     alert("Erro ao buscar dados da diária para log.");
                     return;
                 }
 
-                const { error } = await _supabase.from('diarias').delete().eq('id', diariaId);
+                const { error } = await _supabase.from('diarias_lancadas').delete().eq('id', diariaId);
                 if (error) {
                     alert("Erro ao excluir diária.");
                     console.error(error);
