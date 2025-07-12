@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Diárias</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -122,7 +123,7 @@
             width: 100%;
             padding: calc(var(--spacing-unit) * 0.75);
             margin-bottom: var(--spacing-unit);
-            border: 1px solid var(--input-border-color);
+            border: 1px solid var(--color-background-medium);
             border-radius: var(--border-radius-soft);
             box-sizing: border-box;
             font-size: 1rem;
@@ -189,7 +190,9 @@
         .data-table th, .data-table td { 
             border: 1px solid var(--color-background-medium); 
             padding: calc(var(--spacing-unit) * 0.6); 
-            text-align: left; 
+            text-align: left;
+            /* ALTERAÇÃO VISUAL: Evita quebra de linha feia nas tabelas */
+            white-space: nowrap;
         }
         .data-table thead th { 
             background-color: var(--color-background-medium); 
@@ -205,6 +208,7 @@
             cursor: default;
         }
         
+      /* ALTERAÇÃO VISUAL: Garante que a rolagem horizontal funcione bem */
         .card .table-responsive {
             overflow-x: auto; 
             -webkit-overflow-scrolling: touch; 
@@ -466,7 +470,7 @@
             gap: var(--spacing-unit);
         }
         .regra-item .regra-fields .form-group {
-            flex: 1 1 calc(50% - var(--spacing-unit) / 2); /* 2 colunas em telas maiores */
+            flex: 1 1 calc(50% - var(--spacing-unit) / 2); /* 2 colunas em telas menores */
             min-width: 150px; /* Garante que não fique muito pequeno */
         }
         @media (min-width: 768px) {
@@ -542,7 +546,6 @@
                             </svg>
                             <span>Relatórios</span>
                         </button>
-                        
                         <button id="btnGoToCriarLogin" class="admin-button">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus">
                                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -550,9 +553,8 @@
                                 <line x1="19" x2="19" y1="8" y2="14"/>
                                 <line x1="22" x2="16" y1="11" y2="11"/>
                             </svg>
-                            <span>Criar Login</span>
+                            <span>Criar Acesso</span>
                         </button>
-                        
                         <button id="btnGoToListarLogins" class="admin-button">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users-2">
                                 <path d="M14 19a6 6 0 0 0-12 0"/>
@@ -868,11 +870,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group"><label for="editDiariaValorPago">Valor Calculado:</label><input type="text" id="editDiariaValorPago" readonly></div>
+                        <div class="form-group"><label for="editDiariaValor">Valor (R$):</label><input type="number" id="editDiariaValor" step="0.01"></div>
                     </div>
                     <div class="modal-buttons">
-                        <button class="btn-secondary" id="cancelEditDiaria">Cancelar</button>
-                        <button class="btn-primary" id="saveEditDiaria">Salvar Alterações</button>
+                        <button id="cancelEditDiariaButton" class="btn-secondary">Cancelar</button>
+                        <button id="saveEditDiariaButton" class="btn-success">Salvar Alterações</button>
                     </div>
                 </div>
             </div>
@@ -887,13 +889,12 @@
                         <thead>
                             <tr>
                                 <th>Data/Hora</th>
-                                <th>Ação</th>
-                                <th>Diária ID</th> <th>Usuário</th>
+                                <th>Usuário</th>
                                 <th>Detalhes</th>
                             </tr>
                         </thead>
                         <tbody id="historicoTableBody">
-                            <tr><td colspan="5" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>
+                            <tr><td colspan="3" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -903,12 +904,9 @@
         <div id="screenGerenciarRegras" class="screen">
             <button id="btnGerenciarRegrasVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
             <div class="card">
-                <h2>Gerenciar Regras de Pagamento</h2>
-                <p style="color: var(--color-text-muted); margin-bottom: var(--spacing-unit);">
-                    Ajuste aqui os valores e as regras de cálculo para cada função.
-                </p>
+                <h2>Gerenciar Regras de Pagamento de Diárias</h2>
                 <div id="regrasPagamentoList">
-                    <p style="text-align: center; padding: 20px;">Carregando regras de pagamento...</p>
+                    <p style="text-align: center;">Carregando regras...</p>
                 </div>
             </div>
         </div>
@@ -916,29 +914,25 @@
         <div id="screenRelatorioColaboradores" class="screen">
             <button id="btnRelatorioColaboradoresVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
             <div class="card">
-                <h2>Relatório de Colaboradores Cadastrados</h2>
+                <h2>Relatório de Colaboradores</h2>
+                <button id="btnGerarRelatorioColaboradoresPdf" class="btn-success" style="margin-bottom: var(--spacing-unit);">Gerar PDF</button>
                 <div class="table-responsive">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Nome Completo</th>
+                                <th>Nome</th>
                                 <th>Função</th>
                                 <th>Setor</th>
-                                <th>Chave PIX</th>
+                                <th>PIX</th>
                                 <th>CPF</th>
                                 <th>Telefone</th>
                                 <th>Endereço</th>
                                 <th>Nasc.</th>
-                                <th>Nome Mãe</th>
+                                <th>Mãe</th>
                             </tr>
                         </thead>
-                        <tbody id="relatorioColaboradoresTableBody">
-                            <tr><td colspan="9" style="text-align: center; padding: 20px;">Carregando colaboradores...</td></tr>
-                        </tbody>
+                        <tbody id="relatorioColaboradoresTableBody"></tbody>
                     </table>
-                </div>
-                <div class="report-buttons" style="margin-top: 1.5rem;">
-                    <button id="btnGerarRelatorioColaboradoresPdf" class="btn-primary">Gerar PDF dos Colaboradores</button>
                 </div>
             </div>
         </div>
@@ -947,242 +941,228 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // SUAS CREDENCIAIS SUPABASE AQUI!
+            // --- VARIÁVEIS GLOBAIS ---
             const SUPABASE_URL = 'https://pbgnhcwspgvqcwlbbxle.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZ25oY3dzcGd2cWN3bGJieGxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNTQwNjksImV4cCI6MjA2NjkzMDA2OX0.9wOVZGObGwmL5T1qLkxOA2Ktm9TmW-zBPQnyn94vYSo'; // Atualize para sua chave anon de produção
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZ25oY3dzcGd2cWN3bGJieGxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzNTQwNjksImV4cCI6MjA2NjkzMDA2OX0.9wOVZGObGwmL5T1qLkxOA2Ktm9TmW-zBPQnyn94vYSo';
             const { createClient } = supabase;
             const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            let currentUser = null;
-            let colaboradoresCache = []; // Cache de colaboradores para evitar múltiplas chamadas
-            let diariasCache = []; // Cache de diárias para edição/exclusão
-            let regrasPagamentoCache = []; // NOVO: Cache para regras de pagamento
-            
-            const { jsPDF } = window.jspdf;
-            const XLSX = window.XLSX; // Garantir que XLSX está globalmente acessível
-
-            // --- DOM SELECTORS ---
-            const screens = {
-                login: document.getElementById('screenLogin'), 
-                dashboard: document.getElementById('screenDashboard'),
-                adicionarColaborador: document.getElementById('screenAdicionarColaborador'), 
-                listarColaboradores: document.getElementById('screenListarColaboradores'), 
-                lancarDiarias: document.getElementById('screenLancarDiarias'),
-                relatorios: document.getElementById('screenRelatorios'),
-                criarLogin: document.getElementById('screenCriarLogin'),
-                listarLogins: document.getElementById('screenListarLogins'), 
-                alterarSenha: document.getElementById('screenAlterarSenha'),
-                gerenciarDiarias: document.getElementById('screenGerenciarDiarias'), 
-                historico: document.getElementById('screenHistorico'),
-                gerenciarRegras: document.getElementById('screenGerenciarRegras'), // Nova tela de regras
-                relatorioColaboradores: document.getElementById('screenRelatorioColaboradores') // Nova tela de relatório de colaboradores
-            };
-
-            const loginEmailInput = document.getElementById('loginEmail'), loginPasswordInput = document.getElementById('loginPassword'), loginButton = document.getElementById('loginButton'), loginErrorMessage = document.getElementById('loginErrorMessage');
-            const logoutButton = document.getElementById('logoutButton'), userEmailDisplay = document.getElementById('userEmailDisplay');
-            const userMainPanel = document.getElementById('userMainPanel'); 
-            
-            // Colaboradores
-            const btnGoToListarColaboradores = document.getElementById('btnGoToListarColaboradores'); 
-            const btnGoToAdicionarColaborador = document.getElementById('btnGoToAdicionarColaborador'); 
-            const btnAdicionarColabVoltar = document.getElementById('btnAdicionarColabVoltar'); 
-            const btnListarColabVoltar = document.getElementById('btnListarColabVoltar'); 
-            const colaboradorFormTitle = document.getElementById('colaboradorFormTitle'); 
-
-            const btnSalvarColaborador = document.getElementById('btnSalvarColaborador');
-            const colabNomeInput = document.getElementById('colabNome');
-            const colabFuncaoSelect = document.getElementById('colabFuncao'); 
-            const colabSetorSelect = document.getElementById('colabSetor'); 
-            const colabPixInput = document.getElementById('colabPix');
-            const colabCpfInput = document.getElementById('colabCpf'), colabTelefoneInput = document.getElementById('colabTelefone'), colabEnderecoInput = document.getElementById('colabEndereco');
-            const colabDataNascimentoInput = document.getElementById('colabDataNascimento'), colabNomeMaeInput = document.getElementById('colabNomeMae'); // NOVOS DOM
-            const colaboradoresTableBody = document.getElementById('colaboradoresTableBody');
-            
-            // Lançar Diárias
-            const btnGoToLancarDiaria = document.getElementById('btnGoToLancarDiaria');
-            const btnLancarDiariasVoltar = document.getElementById('btnLancarDiariasVoltar'); 
-            const btnSalvarDiaria = document.getElementById('btnSalvarDiaria');
-            const diariaColaboradorSelect = document.getElementById('diariaColaborador'), diariaFuncaoInput = document.getElementById('diariaFuncao'), diariaSetorInput = document.getElementById('diariaSetor'), diariaDataInput = document.getElementById('diariaData'), diariaCamposDinamicos = document.getElementById('diariaCamposDinamicos'), diariaDobrouCheckbox = document.getElementById('diariaDobrou'), diariaHorasContainer = document.getElementById('diariaHorasContainer'), diariaHoraEntradaInput = document.getElementById('diariaHoraEntrada'), diariaHoraSaidaInput = document.getElementById('diariaHoraSaida');
-            
-            // Relatórios
-            const btnGoToRelatorios = document.getElementById('btnGoToRelatorios');
-            const btnRelatoriosVoltar = document.getElementById('btnRelatoriosVoltar');
-            const relatorioDataInicioInput = document.getElementById('relatorioDataInicio');
-            const relatorioDataFimInput = document.getElementById('relatorioDataFim');
-            const btnVerResumo = document.getElementById('btnVerResumo'); 
-            const btnGerarRelatorioXlsx = document.getElementById('btnGerarRelatorioXlsx'); 
-            const resumoPagamentosDiv = document.getElementById('resumoPagamentos'); 
-            const resumoPagamentosBody = document.getElementById('resumoPagamentosBody'); 
-            const resumoPagamentosTotal = document.getElementById('resumoPagamentosTotal'); 
-            const resumoGastosDiv = document.getElementById('resumoGastos'); 
-            const resumoGastosBody = document.getElementById('resumoGastosBody'); 
-
-            // Criar Login
-            const btnGoToCriarLogin = document.getElementById('btnGoToCriarLogin');
-            const btnCriarLoginVoltar = document.getElementById('btnCriarLoginVoltar');
-            const createUserEmailInput = document.getElementById('createUserEmail');
-            const generatedPasswordDisplay = document.getElementById('generatedPasswordDisplay'); 
-            const btnCreateUser = document.getElementById('btnCreateUser');
-            const createUserErrorMessage = document.getElementById('createUserErrorMessage');
-
-            // Listar Logins
-            const btnGoToListarLogins = document.getElementById('btnGoToListarLogins');
-            const btnListarLoginsVoltar = document.getElementById('btnListarLoginsVoltar');
-            const usersTableBody = document.getElementById('usersTableBody');
-            const listarLoginsMessage = document.getElementById('listarLoginsMessage');
-
-            // Alterar Senha
-            const btnGoToAlterarSenha = document.getElementById('btnGoToAlterarSenha');
-            const btnAlterarSenhaVoltar = document.getElementById('btnAlterarSenhaVoltar');
-            const currentPasswordInput = document.getElementById('currentPassword');
-            const newPasswordInput = document.getElementById('newPassword');
-            const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
-            const btnChangePassword = document.getElementById('btnChangePassword');
-            const changePasswordErrorMessage = document.getElementById('changePasswordErrorMessage');
-
-            // Gerenciar Diárias
-            const btnGoToGerenciarDiarias = document.getElementById('btnGoToGerenciarDiarias');
-            const btnGerenciarDiariasVoltar = document.getElementById('btnGerenciarDiariasVoltar');
-            const gerenciarDiariasTableBody = document.getElementById('gerenciarDiariasTableBody');
-
-            // Modal de Edição de Diária
-            const editDiariaModal = document.getElementById('editDiariaModal');
-            const closeEditModalButton = editDiariaModal.querySelector('.close-button');
-            const cancelEditDiariaButton = document.getElementById('cancelEditDiaria');
-            const saveEditDiariaButton = document.getElementById('saveEditDiaria');
-            const editDiariaIdInput = document.getElementById('editDiariaId');
-            const editDiariaColaboradorNomeInput = document.getElementById('editDiariaColaboradorNome');
-            const editDiariaDataInput = document.getElementById('editDiariaData');
-            const editDiariaFuncaoSelect = document.getElementById('editDiariaFuncao');
-            const editDiariaSetorSelect = document.getElementById('editDiariaSetor');
-            const editDiariaDobrouCheckbox = document.getElementById('editDiariaDobrou');
-            const editDiariaCamposDinamicos = document.getElementById('editDiariaCamposDinamicos');
-            const editDiariaHorasContainer = document.getElementById('editDiariaHorasContainer');
-            const editDiariaHoraEntradaInput = document.getElementById('editDiariaHoraEntrada');
-            const editDiariaHoraSaidaInput = document.getElementById('editDiariaHoraSaida');
-            const editDiariaValorPagoInput = document.getElementById('editDiariaValorPago');
-
-            // Histórico
-            const btnGoToHistorico = document.getElementById('btnGoToHistorico');
-            const btnHistoricoVoltar = document.getElementById('btnHistoricoVoltar');
-            const historicoTableBody = document.getElementById('historicoTableBody');
-
-            // NOVA TELA: Gerenciamento de Regras de Pagamento
-            const btnGoToGerenciarRegras = document.getElementById('btnGoToGerenciarRegras');
-            const btnGerenciarRegrasVoltar = document.getElementById('btnGerenciarRegrasVoltar');
-            const regrasPagamentoList = document.getElementById('regrasPagamentoList');
-            
-            // Relatório de Colaboradores (NOVOS DOM)
-            const btnGoToRelatorioColaboradores = document.getElementById('btnGoToRelatorioColaboradores');
-            const btnRelatorioColaboradoresVoltar = document.getElementById('btnRelatorioColaboradoresVoltar');
-            const relatorioColaboradoresTableBody = document.getElementById('relatorioColaboradoresTableBody');
-            const btnGerarRelatorioColaboradoresPdf = document.getElementById('btnGerarRelatorioColaboradoresPdf');
 
             // ID do administrador mestre (ATUALIZE ESTE ID com o do seu usuário admin no Supabase!)
             // Isso controla a VISIBILIDADE dos botões de ADMIN no frontend.
             // A SEGURANÇA REAL das operações é controlada pelas Políticas de RLS no Supabase!
             const ADMIN_USER_ID = 'bf164038-826a-45df-be61-c81ea2f0cc5f'; 
 
-            // --- CORE FUNCTIONS ---
+            let editingColaboradorId = null; 
+            let regras_pagamento = []; 
+
+            // --- SELETORES DE ELEMENTOS ---
+            // Telas
+            const screens = document.querySelectorAll('.screen');
+            const screenLogin = document.getElementById('screenLogin');
+            const screenDashboard = document.getElementById('screenDashboard');
+            const screenAdicionarColaborador = document.getElementById('screenAdicionarColaborador');
+            const screenListarColaboradores = document.getElementById('screenListarColaboradores');
+            const screenLancarDiarias = document.getElementById('screenLancarDiarias');
+            const screenRelatorios = document.getElementById('screenRelatorios');
+            const screenCriarLogin = document.getElementById('screenCriarLogin');
+            const screenListarLogins = document.getElementById('screenListarLogins');
+            const screenAlterarSenha = document.getElementById('screenAlterarSenha');
+            const screenGerenciarDiarias = document.getElementById('screenGerenciarDiarias');
+            const screenHistorico = document.getElementById('screenHistorico');
+            const screenGerenciarRegras = document.getElementById('screenGerenciarRegras');
+            const screenRelatorioColaboradores = document.getElementById('screenRelatorioColaboradores');
+
+            // Login
+            const loginEmailInput = document.getElementById('loginEmail');
+            const loginPasswordInput = document.getElementById('loginPassword');
+            const loginButton = document.getElementById('loginButton');
+            const loginErrorMessage = document.getElementById('loginErrorMessage');
+            const userEmailDisplay = document.getElementById('userEmailDisplay');
+            const logoutButton = document.getElementById('logoutButton');
+
+            // Dashboard
+            const userMainPanel = document.getElementById('userMainPanel');
+            const btnGoToLancarDiaria = document.getElementById('btnGoToLancarDiaria');
+            const btnGoToListarColaboradores = document.getElementById('btnGoToListarColaboradores');
+            const btnGoToRelatorios = document.getElementById('btnGoToRelatorios');
+            const btnGoToCriarLogin = document.getElementById('btnGoToCriarLogin');
+            const btnGoToListarLogins = document.getElementById('btnGoToListarLogins');
+            const btnGoToAlterarSenha = document.getElementById('btnGoToAlterarSenha');
+            const btnGoToGerenciarDiarias = document.getElementById('btnGoToGerenciarDiarias');
+            const btnGoToHistorico = document.getElementById('btnGoToHistorico');
+            const btnGoToGerenciarRegras = document.getElementById('btnGoToGerenciarRegras');
+            const btnGoToRelatorioColaboradores = document.getElementById('btnGoToRelatorioColaboradores');
+
+            // Adicionar/Editar Colaborador
+            const colaboradorFormTitle = document.getElementById('colaboradorFormTitle');
+            const colabNomeInput = document.getElementById('colabNome');
+            const colabFuncaoSelect = document.getElementById('colabFuncao');
+            const colabSetorSelect = document.getElementById('colabSetor');
+            const colabPixInput = document.getElementById('colabPix');
+            const colabCpfInput = document.getElementById('colabCpf');
+            const colabTelefoneInput = document.getElementById('colabTelefone');
+            const colabEnderecoInput = document.getElementById('colabEndereco');
+            const colabDataNascimentoInput = document.getElementById('colabDataNascimento');
+            const colabNomeMaeInput = document.getElementById('colabNomeMae');
+            const btnSalvarColaborador = document.getElementById('btnSalvarColaborador');
+            const btnAdicionarColabVoltar = document.getElementById('btnAdicionarColabVoltar');
+            const btnListarColabVoltar = document.getElementById('btnListarColabVoltar');
+
+            // Listar Colaboradores
+            const colaboradoresTableBody = document.getElementById('colaboradoresTableBody');
+            const btnGoToAdicionarColaborador = document.getElementById('btnGoToAdicionarColaborador');
+
+            // Lançar Diárias
+            const diariaColaboradorSelect = document.getElementById('diariaColaborador');
+            const diariaFuncaoInput = document.getElementById('diariaFuncao');
+            const diariaSetorInput = document.getElementById('diariaSetor');
+            const diariaDataInput = document.getElementById('diariaData');
+            const diariaCamposDinamicos = document.getElementById('diariaCamposDinamicos');
+            const diariaDobrouCheckbox = document.getElementById('diariaDobrou');
+            const diariaHorasContainer = document.getElementById('diariaHorasContainer');
+            const diariaHoraEntradaInput = document.getElementById('diariaHoraEntrada');
+            const diariaHoraSaidaInput = document.getElementById('diariaHoraSaida');
+            const btnSalvarDiaria = document.getElementById('btnSalvarDiaria');
+            const btnLancarDiariasVoltar = document.getElementById('btnLancarDiariasVoltar');
+
+            // Relatórios
+            const relatorioDataInicioInput = document.getElementById('relatorioDataInicio');
+            const relatorioDataFimInput = document.getElementById('relatorioDataFim');
+            const btnVerResumo = document.getElementById('btnVerResumo');
+            const btnGerarRelatorioXlsx = document.getElementById('btnGerarRelatorioXlsx');
+            const btnRelatoriosVoltar = document.getElementById('btnRelatoriosVoltar');
+            const resumoPagamentosDiv = document.getElementById('resumoPagamentos');
+            const resumoPagamentosBody = document.getElementById('resumoPagamentosBody');
+            const resumoPagamentosTotal = document.getElementById('resumoPagamentosTotal');
+            const resumoGastosDiv = document.getElementById('resumoGastos');
+            const resumoGastosBody = document.getElementById('resumoGastosBody');
+            
+            // Criar Login
+            const createUserEmailInput = document.getElementById('createUserEmail');
+            const generatedPasswordDisplay = document.getElementById('generatedPasswordDisplay');
+            const btnCreateUser = document.getElementById('btnCreateUser');
+            const createUserErrorMessage = document.getElementById('createUserErrorMessage');
+            const btnCriarLoginVoltar = document.getElementById('btnCriarLoginVoltar');
+
+            // Listar Logins
+            const usersTableBody = document.getElementById('usersTableBody');
+            const listarLoginsMessage = document.getElementById('listarLoginsMessage');
+            const btnListarLoginsVoltar = document.getElementById('btnListarLoginsVoltar');
+
+            // Alterar Senha
+            const currentPasswordInput = document.getElementById('currentPassword');
+            const newPasswordInput = document.getElementById('newPassword');
+            const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
+            const btnChangePassword = document.getElementById('btnChangePassword');
+            const changePasswordErrorMessage = document.getElementById('changePasswordErrorMessage');
+            const btnAlterarSenhaVoltar = document.getElementById('btnAlterarSenhaVoltar');
+
+            // Gerenciar Diárias
+            const gerenciarDiariasTableBody = document.getElementById('gerenciarDiariasTableBody');
+            const btnGerenciarDiariasVoltar = document.getElementById('btnGerenciarDiariasVoltar');
+            const editDiariaModal = document.getElementById('editDiariaModal');
+            const closeEditModalButton = editDiariaModal.querySelector('.close-button');
+            const editDiariaIdInput = document.getElementById('editDiariaId');
+            const editDiariaColaboradorNomeInput = document.getElementById('editDiariaColaboradorNome');
+            const editDiariaDataInput = document.getElementById('editDiariaData');
+            const editDiariaFuncaoSelect = document.getElementById('editDiariaFuncao');
+            const editDiariaSetorSelect = document.getElementById('editDiariaSetor');
+            const editDiariaValorInput = document.getElementById('editDiariaValor');
+            const editDiariaCamposDinamicos = document.getElementById('editDiariaCamposDinamicos');
+            const editDiariaDobrouCheckbox = document.getElementById('editDiariaDobrou');
+            const editDiariaHorasContainer = document.getElementById('editDiariaHorasContainer');
+            const editDiariaHoraEntradaInput = document.getElementById('editDiariaHoraEntrada');
+            const editDiariaHoraSaidaInput = document.getElementById('editDiariaHoraSaida');
+            const cancelEditDiariaButton = document.getElementById('cancelEditDiariaButton');
+            const saveEditDiariaButton = document.getElementById('saveEditDiariaButton');
+
+            // Histórico
+            const historicoTableBody = document.getElementById('historicoTableBody');
+            const btnHistoricoVoltar = document.getElementById('btnHistoricoVoltar');
+
+            // Gerenciar Regras
+            const regrasPagamentoList = document.getElementById('regrasPagamentoList');
+            const btnGerenciarRegrasVoltar = document.getElementById('btnGerenciarRegrasVoltar');
+
+            // Relatório Colaboradores
+            const relatorioColaboradoresTableBody = document.getElementById('relatorioColaboradoresTableBody');
+            const btnRelatorioColaboradoresVoltar = document.getElementById('btnRelatorioColaboradoresVoltar');
+            const btnGerarRelatorioColaboradoresPdf = document.getElementById('btnGerarRelatorioColaboradoresPdf');
+
+            // --- FUNÇÕES DE NAVEGAÇÃO E UI ---
             function showScreen(screenId) {
-                Object.values(screens).forEach(screen => {
+                screens.forEach(screen => {
                     screen.classList.remove('active');
                 });
-                if (screens[screenId]) {
-                    screens[screenId].classList.add('active');
+                const activeScreen = document.getElementById(`screen${screenId.charAt(0).toUpperCase() + screenId.slice(1)}`);
+                if (activeScreen) {
+                    activeScreen.classList.add('active');
                 } else {
-                    console.error(`Tela com ID '${screenId}' não encontrada.`);
+                    console.error(`Tela com ID 'screen${screenId.charAt(0).toUpperCase() + screenId.slice(1)}' não encontrada.`);
                 }
             }
 
+            // --- FUNÇÕES DE AUTENTICAÇÃO ---
             async function handleLogin() {
-                loginErrorMessage.style.display = 'none';
                 const email = loginEmailInput.value;
                 const password = loginPasswordInput.value;
+                loginErrorMessage.style.display = 'none';
 
                 const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
 
                 if (error) {
                     loginErrorMessage.textContent = `Erro de login: ${error.message}`;
                     loginErrorMessage.style.display = 'block';
+                    console.error("Erro no login:", error);
                 } else if (data.user) {
                     await setupDashboard(data.user);
                 }
             }
 
-            async function setupDashboard(user) {
-                currentUser = user;
-                userEmailDisplay.textContent = user.email;
-
-                // Visibilidade de botões de ADMIN (controlada por RLS no backend para segurança real)
-                // Adicionado safe check para cada botão
-                if (user.id === ADMIN_USER_ID) { 
-                    if(btnGoToCriarLogin) btnGoToCriarLogin.style.display = 'flex'; 
-                    if(btnGoToListarLogins) btnGoToListarLogins.style.display = 'flex';
-                    if(btnGoToGerenciarDiarias) btnGoToGerenciarDiarias.style.display = 'flex'; 
-                    if(btnGoToHistorico) btnGoToHistorico.style.display = 'flex'; 
-                    if(btnGoToGerenciarRegras) btnGoToGerenciarRegras.style.display = 'flex'; 
-                    if(btnGoToRelatorioColaboradores) btnGoToRelatorioColaboradores.style.display = 'flex'; 
-                } else {
-                    if(btnGoToCriarLogin) btnGoToCriarLogin.style.display = 'none';
-                    if(btnGoToListarLogins) btnGoToListarLogins.style.display = 'none';
-                    if(btnGoToGerenciarDiarias) btnGoToGerenciarDiarias.style.display = 'none'; 
-                    if(btnGoToHistorico) btnGoToHistorico.style.display = 'none'; 
-                    if(btnGoToGerenciarRegras) btnGoToGerenciarRegras.style.display = 'none';
-                    if(btnGoToRelatorioColaboradores) btnGoToRelatorioColaboradores.style.display = 'none';
-                }
-                if(btnGoToAlterarSenha) btnGoToAlterarSenha.style.display = 'flex'; 
-
-                showScreen('dashboard');
-            }
-
             async function handleLogout() {
                 const { error } = await _supabase.auth.signOut();
                 if (error) {
-                    console.error("Erro ao fazer logout:", error.message);
-                    alert("Erro ao sair. Tente novamente.");
+                    alert(`Erro ao sair: ${error.message}`);
                 } else {
-                    currentUser = null;
                     showScreen('login');
-                    loginEmailInput.value = '';
-                    loginPasswordInput.value = '';
-                    loginErrorMessage.style.display = 'none';
                 }
             }
 
-            // --- NOVO: Função para carregar Regras de Pagamento ---
-            async function fetchRegrasPagamento() {
-                const { data, error } = await _supabase.from('regras_pagamento').select('*').order('funcao');
+            async function setupDashboard(user) {
+                userEmailDisplay.textContent = user.email;
+                const isAdmin = user.id === ADMIN_USER_ID;
+
+                // Esconde/mostra botões de admin
+                btnGoToCriarLogin.style.display = isAdmin ? 'flex' : 'none';
+                btnGoToListarLogins.style.display = isAdmin ? 'flex' : 'none';
+                btnGoToGerenciarRegras.style.display = isAdmin ? 'flex' : 'none';
+
+                // Carrega dados essenciais
+                await fetchRegrasPagamento();
+                
+                showScreen('dashboard');
+            }
+
+            // --- FUNÇÕES DE COLABORADORES ---
+            async function fetchAndRenderColaboradores() {
+                colaboradoresTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px;">Carregando colaboradores...</td></tr>';
+                const { data, error } = await _supabase.from('colaboradores').select('*').order('nome_completo');
                 if (error) {
-                    console.error("Erro ao buscar regras de pagamento:", error);
-                    alert("Erro ao carregar regras de pagamento.");
-                    return [];
+                    console.error("Erro ao buscar colaboradores:", error);
+                    alert("Erro ao carregar colaboradores.");
+                    colaboradoresTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px;">Erro ao carregar.</td></tr>';
+                    return;
                 }
-                regrasPagamentoCache = data;
-
-                // Preencher selects de função nos formulários
-                const funcoesUnicas = [...new Set(regrasPagamentoCache.map(r => r.funcao))].sort();
-                colabFuncaoSelect.innerHTML = '<option value="">-- Selecione a Função --</option>';
-                editDiariaFuncaoSelect.innerHTML = '<option value="">-- Selecione a Função --</option>';
-                funcoesUnicas.forEach(funcao => {
-                    colabFuncaoSelect.innerHTML += `<option value="${funcao}">${funcao}</option>`;
-                    editDiariaFuncaoSelect.innerHTML += `<option value="${funcao}">${funcao}</option>`;
-                });
-
-                return data;
+                renderColaboradoresTable(data);
             }
 
-
-            // --- COLABORADORES: LISTAGEM, ADIÇÃO E EDIÇÃO ---
-
-            // Função para renderizar a tabela de colaboradores
-            function renderColaboradores() {
+            function renderColaboradoresTable(colaboradores) {
                 colaboradoresTableBody.innerHTML = '';
-                if (colaboradoresCache.length === 0) {
-                    // Colspan ajustado para 10 (8 campos existentes + Nasc. + Nome Mãe + Ações)
+                if (colaboradores.length === 0) {
                     colaboradoresTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px;">Nenhum colaborador cadastrado.</td></tr>';
                     return;
                 }
-                colaboradoresCache.forEach(colab => {
+                colaboradores.forEach(colab => {
                     const row = colaboradoresTableBody.insertRow();
                     row.innerHTML = `
                         <td>${colab.nome_completo}</td>
@@ -1192,1022 +1172,679 @@
                         <td>${formatCpf(colab.cpf) || 'N/A'}</td>
                         <td>${formatTelefone(colab.telefone) || 'N/A'}</td>
                         <td>${colab.endereco || 'N/A'}</td>
-                        <td>${colab.data_nascimento ? new Date(colab.data_nascimento).toLocaleDateString('pt-BR') : 'N/A'}</td>
+                        <td>${colab.data_nascimento ? new Date(colab.data_nascimento).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'N/A'}</td>
                         <td>${colab.nome_mae || 'N/A'}</td>
-                        <td>
-                            <button class="btn-secondary btn-sm" data-action="edit" data-id="${colab.id}" style="padding: 5px 10px; font-size: 0.8rem;">Editar</button>
-                        </td>
-                        `;
+                        <td><button class="btn-secondary edit-colab-btn" data-id="${colab.id}">Editar</button></td>
+                    `;
                 });
-
-                // Adiciona listeners para os botões de editar (e futuramente excluir)
-                colaboradoresTableBody.querySelectorAll('button[data-action="edit"]').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const id = e.target.dataset.id;
-                        handleEditarColaborador(id);
-                    });
+                document.querySelectorAll('.edit-colab-btn').forEach(button => {
+                    button.addEventListener('click', (e) => handleEditColaborador(e.target.dataset.id));
                 });
             }
 
-            // Função para buscar colaboradores e renderizar
-            async function fetchAndRenderColaboradores() {
-                const { data, error } = await _supabase.from('colaboradores').select('*').order('nome_completo');
+            async function handleEditColaborador(id) {
+                const { data, error } = await _supabase.from('colaboradores').select('*').eq('id', id).single();
                 if (error) {
-                    console.error("Erro ao buscar colaboradores:", error);
+                    console.error("Erro ao buscar colaborador para edição:", error);
+                    alert("Erro ao carregar dados do colaborador.");
+                    return;
+                }
+                editingColaboradorId = id;
+                colaboradorFormTitle.textContent = 'Editar Colaborador';
+                btnSalvarColaborador.textContent = 'Salvar Alterações';
+                btnSalvarColaborador.classList.remove('btn-success');
+                btnSalvarColaborador.classList.add('btn-primary');
+
+                colabNomeInput.value = data.nome_completo;
+                colabFuncaoSelect.value = data.funcao;
+                colabSetorSelect.value = data.setor;
+                colabPixInput.value = data.chave_pix;
+                colabCpfInput.value = formatCpf(data.cpf);
+                colabTelefoneInput.value = formatTelefone(data.telefone);
+                colabEnderecoInput.value = data.endereco;
+                colabDataNascimentoInput.value = data.data_nascimento;
+                colabNomeMaeInput.value = data.nome_mae;
+
+                showScreen('adicionarColaborador');
+            }
+
+            async function handleSalvarColaborador() {
+                const nome = colabNomeInput.value.trim();
+                const funcao = colabFuncaoSelect.value;
+                const setor = colabSetorSelect.value;
+                const pix = colabPixInput.value.trim();
+                const cpf = colabCpfInput.value.replace(/\D/g, ''); 
+                const telefone = colabTelefoneInput.value.replace(/\D/g, ''); 
+                const endereco = colabEnderecoInput.value.trim();
+                const dataNascimento = colabDataNascimentoInput.value || null;
+                const nomeMae = colabNomeMaeInput.value.trim();
+
+                if (!nome || !funcao || !setor) {
+                    alert('Nome, Função e Setor são obrigatórios.');
+                    return;
+                }
+
+                const colabData = {
+                    nome_completo: nome,
+                    funcao: funcao,
+                    setor: setor,
+                    chave_pix: pix,
+                    cpf: cpf,
+                    telefone: telefone,
+                    endereco: endereco,
+                    data_nascimento: dataNascimento,
+                    nome_mae: nomeMae
+                };
+
+                let result;
+                if (editingColaboradorId) {
+                    result = await _supabase.from('colaboradores').update(colabData).eq('id', editingColaboradorId);
+                } else {
+                    result = await _supabase.from('colaboradores').insert([colabData]);
+                }
+
+                if (result.error) {
+                    console.error("Erro ao salvar colaborador:", result.error);
+                    alert(`Erro ao salvar: ${result.error.message}`);
+                } else {
+                    alert(`Colaborador ${editingColaboradorId ? 'atualizado' : 'adicionado'} com sucesso!`);
+                    editingColaboradorId = null;
+                    await fetchAndRenderColaboradores();
+                    showScreen('listarColaboradores');
+                }
+            }
+
+            // --- FUNÇÕES DE DIÁRIAS ---
+            async function showLancarDiariasScreen() {
+                const { data, error } = await _supabase.from('colaboradores').select('id, nome_completo').order('nome_completo');
+                if (error) {
+                    console.error("Erro ao buscar colaboradores para diárias:", error);
                     alert("Erro ao carregar colaboradores.");
                     return;
                 }
-                colaboradoresCache = data;
-                renderColaboradores();
-            }
-
-            // Função para lidar com o salvamento/atualização de colaborador
-            let editingColaboradorId = null; 
-            async function handleSalvarColaborador() {
-                const nome = colabNomeInput.value.trim();
-                const funcao = colabFuncaoSelect.value.trim(); 
-                const setor = colabSetorSelect.value.trim();
-                const pix = colabPixInput.value.trim();
-                const cpf = colabCpfInput.value.replace(/\D/g, ''); // Remove não dígitos para salvar
-                const telefone = colabTelefoneInput.value.replace(/\D/g, ''); // Remove não dígitos para salvar
-                const endereco = colabEnderecoInput.value.trim();
-                const dataNascimento = colabDataNascimentoInput.value; // Novo campo
-                const nomeMae = colabNomeMaeInput.value.trim(); // Novo campo
-
-                // Validação de campos obrigatórios (frontend)
-                if (!nome) { alert('O campo "Nome Completo" é obrigatório.'); return; }
-                if (funcao === "") { alert('Por favor, selecione uma função válida.'); return; }
-                if (setor === "") { alert('Por favor, selecione um setor válido.'); return; }
-                if (!pix) { alert('O campo "Chave PIX" é obrigatório.'); return; }
-                if (!cpf) { alert('O campo "CPF" é obrigatório.'); return; }
-
-
-                let response;
-                try {
-                    if (editingColaboradorId) {
-                        // Modo edição
-                        response = await _supabase.from('colaboradores')
-                            .update({ 
-                                nome_completo: nome, 
-                                funcao: funcao, 
-                                setor: setor, 
-                                chave_pix: pix,
-                                cpf: cpf,
-                                telefone: telefone,
-                                endereco: endereco,
-                                data_nascimento: dataNascimento || null, // Salva como null se vazio
-                                nome_mae: nomeMae || null // Salva como null se vazio
-                            })
-                            .eq('id', editingColaboradorId)
-                            .select();
-                    } else {
-                        // Modo adição
-                        response = await _supabase.from('colaboradores').insert([
-                            { 
-                                nome_completo: nome, 
-                                funcao: funcao, 
-                                setor: setor, 
-                                chave_pix: pix,
-                                cpf: cpf,
-                                telefone: telefone,
-                                endereco: endereco,
-                                data_nascimento: dataNascimento || null,
-                                nome_mae: nomeMae || null,
-                                ativo: true 
-                            }
-                        ]).select();
-                    }
-
-                    const { data, error } = response;
-
-                    if (error) {
-                        // Tratamento de erro específico para CPF duplicado (unique_cpf)
-                        if (error.code === '23505' && error.message.includes('unique_cpf')) {
-                            alert(`Erro: O CPF ${formatCpf(cpf)} já está cadastrado para outro colaborador.`);
-                        } else {
-                            alert(`Erro ao salvar/atualizar colaborador: ${error.message}`);
-                            console.error("Erro no salvamento/atualização do colaborador:", error);
-                        }
-                    } else {
-                        alert(`Colaborador ${editingColaboradorId ? 'atualizado' : 'salvo'} com sucesso!`);
-                        // Limpar formulário e estado de edição
-                        colabNomeInput.value = '';
-                        colabFuncaoSelect.value = ''; 
-                        colabSetorSelect.value = ''; 
-                        colabPixInput.value = '';
-                        colabCpfInput.value = '';
-                        colabTelefoneInput.value = '';
-                        colabEnderecoInput.value = '';
-                        colabDataNascimentoInput.value = '';
-                        colabNomeMaeInput.value = '';
-                        
-                        editingColaboradorId = null;
-                        colaboradorFormTitle.textContent = 'Adicionar Novo Colaborador';
-                        btnSalvarColaborador.textContent = 'Salvar Novo Colaborador';
-                        btnSalvarColaborador.classList.remove('btn-primary'); 
-                        btnSalvarColaborador.classList.add('btn-success');
-
-                        showScreen('listarColaboradores'); // Volta para a lista
-                        fetchAndRenderColaboradores(); // Recarrega a lista
-                    }
-                } catch (e) {
-                    alert(`Ocorreu um erro inesperado: ${e.message}`);
-                    console.error("Erro inesperado em handleSalvarColaborador:", e);
-                }
-            }
-
-            // Função para lidar com a edição de colaborador
-            async function handleEditarColaborador(id) {
-                const colaborador = colaboradoresCache.find(colab => colab.id === id);
-                if (!colaborador) {
-                    alert('Colaborador não encontrado para edição.');
-                    return;
-                }
-
-                editingColaboradorId = id;
-                colabNomeInput.value = colaborador.nome_completo;
-                colabFuncaoSelect.value = colaborador.funcao;
-                colabSetorSelect.value = colaborador.setor;
-                colabPixInput.value = colaborador.chave_pix || '';
-                colabCpfInput.value = formatCpf(colaborador.cpf) || ''; // Formata para exibição
-                colabTelefoneInput.value = formatTelefone(colaborador.telefone) || ''; // Formata para exibição
-                colabEnderecoInput.value = colaborador.endereco || '';
-                colabDataNascimentoInput.value = colaborador.data_nascimento || '';
-                colabNomeMaeInput.value = colaborador.nome_mae || '';
-
-                colaboradorFormTitle.textContent = 'Editar Colaborador Existente';
-                btnSalvarColaborador.textContent = 'Atualizar Colaborador';
-                btnSalvarColaborador.classList.remove('btn-success');
-                btnSalvarColaborador.classList.add('btn-primary'); 
-                
-                showScreen('adicionarColaborador'); // Vai para a tela de formulário
-            }
-
-            // --- Lançamento de Diárias - Lógica de Cálculo e Exibição ---
-            
-            // Função de cálculo de valor da diária (reutilizada para edição)
-            function calculateAndSetDiariaValue(isEditContext = false) {
-                const currentDiariaFuncaoSelect = isEditContext ? editDiariaFuncaoSelect : diariaFuncaoInput; 
-                const currentDiariaDobrouCheckbox = isEditContext ? editDiariaDobrouCheckbox : diariaDobrouCheckbox;
-                const currentDiariaHoraEntradaInput = isEditContext ? editDiariaHoraEntradaInput : diariaHoraEntradaInput;
-                const currentDiariaHoraSaidaInput = isEditContext ? editDiariaHoraSaidaInput : diariaHoraSaidaInput;
-                const currentDiariaValorPagoInput = isEditContext ? editDiariaValorPagoInput : null; 
-
-                const funcao = currentDiariaFuncaoSelect.value;
-                const dobrou = currentDiariaDobrouCheckbox.checked;
-                const horaEntrada = currentDiariaHoraEntradaInput.value;
-                const horaSaida = currentDiariaHoraSaidaInput.value;
-                
-                let valorCalculado = 0;
-                let horasTrabalhadas = null;
-
-                const regra = regrasPagamentoCache.find(r => r.funcao === funcao);
-
-                if (!regra) {
-                    if (currentDiariaValorPagoInput) currentDiariaValorPagoInput.value = 'R$ 0,00';
-                    console.warn(`Regra de pagamento não encontrada para a função: ${funcao}`);
-                    return { valorCalculado: 0, horasTrabalhadas: null }; 
-                }
-
-                const dataReferencia = isEditContext ? editDiariaDataInput.value : diariaDataInput.value;
-                let isWeekend = false;
-                if (dataReferencia) {
-                    const dataObj = new Date(dataReferencia + 'T00:00:00'); 
-                    const diaDaSemana = dataObj.getDay(); 
-                    isWeekend = (diaDaSemana === 6 || diaDaSemana === 0); 
-                }
-
-                switch (regra.tipo_calculo) {
-                    case 'Fixo':
-                        valorCalculado = regra.valor_base;
-                        horasTrabalhadas = null;
-                        break;
-                    case 'Fixo com Dobra':
-                        if (dobrou) {
-                            valorCalculado = isWeekend ? regra.valor_dobra_fds : regra.valor_dobra_semana;
-                            horasTrabalhadas = (regra.horas_base || 8) * 2; 
-                        } else {
-                            if (horaEntrada && horaSaida) {
-                                const entradaMS = new Date(`1970-01-01T${horaEntrada}:00`).getTime();
-                                const saidaMS = new Date(`1970-01-01T${horaSaida}:00`).getTime();
-                                
-                                if (saidaMS < entradaMS) { // Virada de dia
-                                    horasTrabalhadas = ((24 * 60 * 60 * 1000) - entradaMS + saidaMS) / (1000 * 60 * 60);
-                                } else {
-                                    horasTrabalhadas = (saidaMS - entradaMS) / (1000 * 60 * 60);
-                                }
-                            } else {
-                                horasTrabalhadas = 0; 
-                            }
-
-                            const basePay = regra.valor_base;
-                            const baseHours = regra.horas_base || 8; 
-                            const hourlyRate = regra.valor_hora_extra || 0; 
-
-                            valorCalculado = (horasTrabalhadas <= baseHours) ? basePay : basePay + ((horasTrabalhadas - baseHours) * hourlyRate);
-                        }
-                        break;
-                    default:
-                        valorCalculado = 0;
-                        horasTrabalhadas = null;
-                        console.warn(`Tipo de cálculo desconhecido: ${regra.tipo_calculo}`);
-                }
-                
-                if (currentDiariaValorPagoInput) {
-                    currentDiariaValorPagoInput.value = `R$ ${valorCalculado.toFixed(2).replace('.', ',')}`;
-                }
-                return { valorCalculado: parseFloat(valorCalculado.toFixed(2)), horasTrabalhadas: horasTrabalhadas ? parseFloat(horasTrabalhadas.toFixed(2)) : null };
-            }
-
-            async function showLancarDiariasScreen() {
-                const { data, error } = await _supabase.from('colaboradores').select('id, nome_completo, funcao, setor').eq('ativo', true).order('nome_completo');
-                if(error) { console.error("Erro ao carregar colaboradores para lançamento de diária:", error); alert("Erro ao carregar colaboradores."); return; }
-                colaboradoresCache = data;
-
-                diariaColaboradorSelect.innerHTML = '<option value="">-- Selecione um Colaborador --</option>';
-                colaboradoresCache.forEach(colab => {
+                diariaColaboradorSelect.innerHTML = '<option value="">-- Selecione o Colaborador --</option>';
+                data.forEach(colab => {
                     diariaColaboradorSelect.innerHTML += `<option value="${colab.id}">${colab.nome_completo}</option>`;
                 });
-                
-                diariaDataInput.valueAsDate = new Date(); 
-                diariaCamposDinamicos.style.display = 'none';
-                diariaFuncaoInput.value = ''; 
+
+                // Resetar campos
+                diariaColaboradorSelect.value = '';
+                diariaFuncaoInput.value = '';
                 diariaSetorInput.value = '';
-                diariaHoraEntradaInput.value = '';
-                diariaHoraSaidaInput.value = '';
-                diariaDobrouCheckbox.checked = false;
+                diariaDataInput.valueAsDate = new Date();
+                diariaCamposDinamicos.style.display = 'none';
                 
                 showScreen('lancarDiarias');
             }
 
-            function toggleDiariaFields(isEditContext = false) {
-                const selectedColabId = isEditContext ? editDiariaColaboradorNomeInput.dataset.colabId : diariaColaboradorSelect.value;
-                const colaborador = colaboradoresCache.find(c => c.id == selectedColabId);
-                
-                const currentDiariaFuncaoInput = isEditContext ? editDiariaFuncaoSelect : diariaFuncaoInput;
-                const currentDiariaSetorInput = isEditContext ? editDiariaSetorSelect : diariaSetorInput;
-                const currentDiariaCamposDinamicos = isEditContext ? editDiariaCamposDinamicos : diariaCamposDinamicos;
-                const currentDiariaHorasContainer = isEditContext ? editDiariaHorasContainer : diariaHorasContainer;
-                const currentDiariaDobrouCheckbox = isEditContext ? editDiariaDobrouCheckbox : diariaDobrouCheckbox;
+            async function toggleDiariaFields(isEdit) {
+                const selectElement = isEdit ? editDiariaFuncaoSelect : diariaColaboradorSelect;
+                const funcaoInput = isEdit ? editDiariaFuncaoSelect : diariaFuncaoInput;
+                const setorInput = isEdit ? editDiariaSetorSelect : diariaSetorInput;
+                const camposDinamicosDiv = isEdit ? editDiariaCamposDinamicos : diariaCamposDinamicos;
+                const dobrouCheckbox = isEdit ? editDiariaDobrouCheckbox : diariaDobrouCheckbox;
+                const horasContainer = isEdit ? editDiariaHorasContainer : diariaHorasContainer;
 
-                if (!colaborador) {
-                    currentDiariaCamposDinamicos.style.display = 'none'; 
-                    currentDiariaFuncaoInput.value = '';
-                    currentDiariaSetorInput.value = '';
-                    if (isEditContext) editDiariaValorPagoInput.value = 'R$ 0,00';
+                const selectedColabId = isEdit ? null : selectElement.value;
+                const selectedFuncao = isEdit ? funcaoInput.value : null;
+
+                if (!isEdit && !selectedColabId) {
+                    funcaoInput.value = '';
+                    setorInput.value = '';
+                    camposDinamicosDiv.style.display = 'none';
                     return;
                 }
 
-                currentDiariaFuncaoInput.value = colaborador.funcao || '';
-                currentDiariaSetorInput.value = colaborador.setor || '';
+                let funcao, setor;
+                if (!isEdit) {
+                    const { data, error } = await _supabase.from('colaboradores').select('funcao, setor').eq('id', selectedColabId).single();
+                    if (error) {
+                        console.error("Erro ao buscar função/setor do colaborador:", error);
+                        return;
+                    }
+                    funcao = data.funcao;
+                    setor = data.setor;
+                    funcaoInput.value = funcao;
+                    setorInput.value = setor;
+                } else {
+                    funcao = selectedFuncao;
+                }
                 
-                const regra = regrasPagamentoCache.find(r => r.funcao === (colaborador.funcao || ''));
+                const regra = regras_pagamento.find(r => r.funcao === funcao);
 
                 if (regra && regra.tipo_calculo === 'Fixo com Dobra') {
-                    currentDiariaCamposDinamicos.style.display = 'block';
-                    currentDiariaHorasContainer.style.display = currentDiariaDobrouCheckbox.checked ? 'none' : 'flex';
+                    camposDinamicosDiv.style.display = 'block';
+                    horasContainer.style.display = dobrouCheckbox.checked ? 'none' : 'flex';
                 } else {
-                    currentDiariaCamposDinamicos.style.display = 'none';
+                    camposDinamicosDiv.style.display = 'none';
+                }
+                calculateAndSetDiariaValue(isEdit);
+            }
+
+            function calculateAndSetDiariaValue(isEdit) {
+                const funcao = isEdit ? editDiariaFuncaoSelect.value : diariaFuncaoInput.value;
+                const dataInput = isEdit ? editDiariaDataInput : diariaDataInput;
+                const dobrouCheckbox = isEdit ? editDiariaDobrouCheckbox : diariaDobrouCheckbox;
+                const horaEntradaInput = isEdit ? editDiariaHoraEntradaInput : diariaHoraEntradaInput;
+                const horaSaidaInput = isEdit ? editDiariaHoraSaidaInput : diariaHoraSaidaInput;
+                const valorInput = isEdit ? editDiariaValorInput : null; // Lançamento não tem input de valor
+
+                const regra = regras_pagamento.find(r => r.funcao === funcao);
+                if (!regra) {
+                    if (valorInput) valorInput.value = '';
+                    return;
                 }
 
-                // Recalcular o valor em tempo real para edição ou novo lançamento
-                calculateAndSetDiariaValue(isEditContext);
+                let valorFinal = 0;
+                const diaDaSemana = new Date(dataInput.value + 'T00:00:00').getDay(); // 0=Domingo, 6=Sábado
+                const isFDS = diaDaSemana === 0 || diaDaSemana === 6;
+
+                if (regra.tipo_calculo === 'Fixo') {
+                    valorFinal = regra.valor_base;
+                } else if (regra.tipo_calculo === 'Fixo com Dobra') {
+                    if (dobrouCheckbox.checked) {
+                        valorFinal = isFDS ? regra.valor_dobra_fds : regra.valor_dobra_semana;
+                    } else {
+                        valorFinal = regra.valor_base;
+                        const entrada = horaEntradaInput.value;
+                        const saida = horaSaidaInput.value;
+                        if (entrada && saida) {
+                            const diffHoras = (new Date(`1970-01-01T${saida}:00`) - new Date(`1970-01-01T${entrada}:00`)) / 3600000;
+                            const horasExtras = Math.max(0, diffHoras - regra.horas_base);
+                            if (horasExtras > 0) {
+                                valorFinal += horasExtras * regra.valor_hora_extra;
+                            }
+                        }
+                    }
+                }
+
+                if (isEdit) {
+                    valorInput.value = valorFinal.toFixed(2);
+                } else {
+                    // Na tela de lançamento, não há um campo de valor para preencher,
+                    // o valor é calculado e salvo diretamente.
+                }
+                return valorFinal;
             }
-            
+
             async function handleSalvarDiaria() {
                 const colaboradorId = diariaColaboradorSelect.value;
                 const dataDiaria = diariaDataInput.value;
-                
-                if (!colaboradorId || !dataDiaria) { alert('Por favor, selecione o colaborador e a data.'); return; }
 
-                const colaborador = colaboradoresCache.find(c => c.id == colaboradorId);
-                if (!colaborador) { alert('Colaborador não encontrado. Recarregue a página.'); return; }
-
-                const { valorCalculado, horasTrabalhadas } = calculateAndSetDiariaValue(false); // Obtém o valor e horas da função de cálculo
-                const dobrou = diariaDobrouCheckbox.checked;
-                let horaEntrada = diariaHoraEntradaInput.value;
-                let horaSaida = diariaHoraSaidaInput.value;
-
-                // Validação específica para "Fixo com Dobra"
-                const regra = regrasPagamentoCache.find(r => r.funcao === colaborador.funcao && r.tipo_calculo === 'Fixo com Dobra');
-                if (regra) {
-                    if (!dobrou && (!horaEntrada || !horaSaida)) {
-                        alert('Para esta função, preencha o horário de entrada e saída, ou marque que dobrou o turno.'); 
-                        return;
-                    }
-                    if (dobrou) {
-                        horaEntrada = null;
-                        horaSaida = null;
-                    }
+                if (!colaboradorId || !dataDiaria) {
+                    alert('Por favor, selecione um colaborador e uma data.');
+                    return;
                 }
-                
-                const lancamento = {
-                    colaborador_id: colaboradorId, 
-                    data_diaria: dataDiaria, 
-                    valor_pago: valorCalculado, 
-                    dobrou: dobrou, 
-                    horas_trabalhadas: horasTrabalhadas,
-                    horario_entrada: horaEntrada,
-                    horario_saida: horaSaida,
-                    funcao_colaborador: colaborador.funcao, 
-                    setor_colaborador: colaborador.setor,
-                    user_id: currentUser.id 
+
+                const { data: { user } } = await _supabase.auth.getUser();
+                const valorFinal = calculateAndSetDiariaValue(false);
+
+                const diariaData = {
+                    colaborador_id: colaboradorId,
+                    data_diaria: dataDiaria,
+                    valor: valorFinal,
+                    funcao: diariaFuncaoInput.value,
+                    setor: diariaSetorInput.value,
+                    lancado_por: user.email,
+                    dobrou: diariaDobrouCheckbox.checked,
+                    hora_entrada: diariaHoraEntradaInput.value || null,
+                    hora_saida: diariaHoraSaidaInput.value || null
                 };
-                
-                const { error } = await _supabase.from('diarias_lancadas').insert([lancamento]);
-                if (error) { 
-                    alert(`Erro ao lançar diária: ${error.message}`); 
-                    console.error("Erro no lançamento da diária:", error.message || error.details || error);
+
+                const { data, error } = await _supabase.from('diarias').insert([diariaData]).select().single();
+                if (error) {
+                    console.error("Erro ao salvar diária:", error);
+                    alert(`Erro ao salvar diária: ${error.message}`);
                 } else {
-                    alert(`Diária de R$ ${valorCalculado.toFixed(2).replace('.', ',')} para ${colaborador.nome_completo} lançada com sucesso!`);
-                    showScreen('dashboard');
+                    await logAction('CREATED', data.id, user.email, `Diária de ${diariaColaboradorSelect.options[diariaColaboradorSelect.selectedIndex].text} (R$ ${data.valor.toFixed(2)}) criada.`);
+                    alert('Diária lançada com sucesso!');
+                    showLancarDiariasScreen(); // Limpa e prepara para o próximo lançamento
                 }
             }
 
-            // --- RELATÓRIOS: PROCESSAMENTO, VISUALIZAÇÃO EM TELA, PDF E XLSX ---
-
-            // Nova função para exibir a tela de relatórios
+            // --- FUNÇÕES DE RELATÓRIOS ---
             function showRelatoriosScreen() {
-                relatorioDataInicioInput.value = '';
-                relatorioDataFimInput.value = '';
+                relatorioDataInicioInput.valueAsDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+                relatorioDataFimInput.valueAsDate = new Date();
                 resumoPagamentosDiv.style.display = 'none';
                 resumoGastosDiv.style.display = 'none';
                 showScreen('relatorios');
             }
 
-            // Nova função para processar os dados do relatório de forma reutilizável
             async function processarDadosRelatorio(dataInicio, dataFim) {
-                resumoPagamentosDiv.style.display = 'none';
-                resumoGastosDiv.style.display = 'none';
-
-                const { data: diarias, error: diariasError } = await _supabase
-                    .from('diarias_lancadas')
-                    .select(`
-                        valor_pago,
-                        funcao_colaborador, 
-                        setor_colaborador, 
-                        colaboradores(nome_completo, chave_pix, setor) 
-                    `)
+                const { data: diarias, error } = await _supabase.from('diarias')
+                    .select(`*, colaboradores(nome_completo, chave_pix)`)
                     .gte('data_diaria', dataInicio)
                     .lte('data_diaria', dataFim);
-                    
-                if (diariasError) {
-                    console.error("Erro ao buscar diárias para o relatório:", diariasError);
-                    alert("Erro ao buscar dados para relatório. Tente novamente.");
+                
+                if (error) {
+                    console.error("Erro ao buscar diárias para relatório:", error);
+                    alert("Erro ao gerar relatório.");
                     return null;
                 }
 
                 if (diarias.length === 0) {
-                    alert('Nenhuma diária encontrada para o período selecionado.');
+                    alert('Nenhuma diária encontrada no período selecionado.');
                     return null;
                 }
 
-                const pagamentosPorColaborador = {};
+                const pagamentos = {};
                 const gastosPorSetor = {};
-                let totalGeral = 0;
 
-                diarias.forEach(diaria => {
-                    const nomeColaborador = diaria.colaboradores?.nome_completo || 'Colaborador Desconhecido';
-                    const chavePix = diaria.colaboradores?.chave_pix || 'N/A';
-                    const setor = diaria.setor_colaborador || diaria.colaboradores?.setor || 'Outros'; 
-                    const valorDiaria = parseFloat(diaria.valor_pago);
-
-                    if (isNaN(valorDiaria)) {
-                        console.warn(`Diária com valor inválido ignorada:`, diaria);
-                        return;
+                diarias.forEach(d => {
+                    // Processa pagamentos
+                    const nome = d.colaboradores.nome_completo;
+                    const pix = d.colaboradores.chave_pix;
+                    if (!pagamentos[nome]) {
+                        pagamentos[nome] = { valor: 0, pix: pix };
                     }
+                    pagamentos[nome].valor += d.valor;
 
-                    if (!pagamentosPorColaborador[nomeColaborador]) {
-                        pagamentosPorColaborador[nomeColaborador] = {
-                            pix: chavePix,
-                            total: 0
-                        };
-                    }
-                    pagamentosPorColaborador[nomeColaborador].total += valorDiaria;
-
+                    // Processa gastos por setor
+                    const setor = d.setor;
                     if (!gastosPorSetor[setor]) {
                         gastosPorSetor[setor] = 0;
                     }
-                    gastosPorSetor[setor] += valorDiaria;
-
-                    totalGeral += valorDiaria;
+                    gastosPorSetor[setor] += d.valor;
                 });
 
-                // CORRIGIDO: Typo de pagamentosPorColador para pagamentosPorColaborador
-                const tabelaPagamentosData = Object.keys(pagamentosPorColaborador).map(nome => {
-                    return {
-                        nome: nome,
-                        pix: pagamentosPorColaborador[nome].pix, 
-                        total: pagamentosPorColaborador[nome].total 
-                    };
-                }).sort((a, b) => a.nome.localeCompare(b.nome));
-
-                const tabelaGastosSetorData = Object.keys(gastosPorSetor).map(setor => {
-                    return {
-                        setor: setor,
-                        total: gastosPorSetor[setor]
-                    };
-                }).sort((a, b) => a.setor.localeCompare(b.setor));
-                
-                return {
-                    pagamentos: tabelaPagamentosData,
-                    gastos: tabelaGastosSetorData,
-                    totalGeral: totalGeral,
-                    periodo: { inicio: dataInicio, fim: dataFim }
-                };
+                return { diarias, pagamentos, gastosPorSetor };
             }
 
-            // Função para exibir o resumo na tela
-            function exibirResumoNaTela(dadosProcessados) {
-                const { pagamentos, gastos, totalGeral, periodo } = dadosProcessados;
-
-                // Limpa e exibe a seção de pagamentos
+            function exibirResumoNaTela(dados) {
+                // Preenche tabela de pagamentos
                 resumoPagamentosBody.innerHTML = '';
-                pagamentos.forEach(item => {
+                let totalPagamentos = 0;
+                Object.entries(dados.pagamentos).sort((a, b) => a[0].localeCompare(b[0])).forEach(([nome, info]) => {
                     const row = resumoPagamentosBody.insertRow();
                     row.innerHTML = `
-                        <td class="text-left">${item.nome}</td>
-                        <td class="text-left">${item.pix}</td>
-                        <td class="text-right">R$ ${item.total.toFixed(2).replace('.', ',')}</td>
+                        <td>${nome}</td>
+                        <td>${info.pix || 'N/A'}</td>
+                        <td class="text-right">${info.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                     `;
+                    totalPagamentos += info.valor;
                 });
-                resumoPagamentosTotal.textContent = `R$ ${totalGeral.toFixed(2).replace('.', ',')}`;
+                resumoPagamentosTotal.textContent = totalPagamentos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 resumoPagamentosDiv.style.display = 'block';
 
-                // Limpa e exibe a seção de gastos
+                // Preenche tabela de gastos
                 resumoGastosBody.innerHTML = '';
-                gastos.forEach(item => {
+                Object.entries(dados.gastosPorSetor).sort((a, b) => a[0].localeCompare(b[0])).forEach(([setor, valor]) => {
                     const row = resumoGastosBody.insertRow();
                     row.innerHTML = `
-                        <td class="text-left">${item.setor}</td>
-                        <td class="text-right">R$ ${item.total.toFixed(2).replace('.', ',')}</td>
+                        <td>${setor}</td>
+                        <td class="text-right">${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                     `;
                 });
                 resumoGastosDiv.style.display = 'block';
             }
 
-            // REMOVIDO: Função para gerar PDF de Diárias (a pedido do usuário)
-
-            // Função para gerar XLSX
             async function gerarRelatorioXlsx() {
                 const dataInicio = relatorioDataInicioInput.value;
                 const dataFim = relatorioDataFimInput.value;
-
                 if (!dataInicio || !dataFim) {
                     alert('Por favor, selecione as datas de início e fim para o relatório.');
                     return;
                 }
+                const dados = await processarDadosRelatorio(dataInicio, dataFim);
+                if (!dados) return;
 
-                console.log("Gerando relatório XLSX para o período:", dataInicio, "a", dataFim);
+                const { diarias, pagamentos, gastosPorSetor } = dados;
 
-                const dadosProcessados = await processarDadosRelatorio(dataInicio, dataFim);
-                if (!dadosProcessados) {
-                    console.log("Nenhum dado processado para o relatório XLSX. Abortando geração.");
-                    return;
-                }
+                // Aba 1: Diárias Detalhadas
+                const ws_diarias_data = [
+                    ["Data", "Colaborador", "Função", "Setor", "Valor (R$)", "Lançado Por"],
+                    ...diarias.map(d => [
+                        new Date(d.data_diaria + 'T00:00:00').toLocaleDateString('pt-BR'),
+                        d.colaboradores.nome_completo,
+                        d.funcao,
+                        d.setor,
+                        d.valor,
+                        d.lancado_por
+                    ])
+                ];
+                const ws_diarias = XLSX.utils.aoa_to_sheet(ws_diarias_data);
 
-                console.log("Dados processados para XLSX:", dadosProcessados);
+                // Aba 2: Resumo de Pagamentos
+                const ws_pagamentos_data = [
+                    ["Colaborador", "Chave PIX", "Valor Total (R$)"],
+                    ...Object.entries(pagamentos).map(([nome, info]) => [nome, info.pix, info.valor])
+                ];
+                const ws_pagamentos = XLSX.utils.aoa_to_sheet(ws_pagamentos_data);
 
-                const { pagamentos, gastos, totalGeral, periodo } = dadosProcessados;
+                // Aba 3: Resumo de Gastos por Setor
+                const ws_gastos_data = [
+                    ["Setor", "Gasto Total (R$)"],
+                    ...Object.entries(gastosPorSetor).map(([setor, valor]) => [setor, valor])
+                ];
+                const ws_gastos = XLSX.utils.aoa_to_sheet(ws_gastos_data);
 
-                // Dados para a planilha
-                const ws_data = [];
-
-                // Título e Período
-                ws_data.push(["Relatório de Diárias"]);
-                ws_data.push([]); // Linha em branco para separação
-                ws_data.push([`Período: ${new Date(periodo.inicio).toLocaleDateString('pt-BR')} a ${new Date(periodo.fim).toLocaleDateString('pt-BR')}`]);
-                
-                // Adicionado tempo de Fortaleza para a data de geração
-                const now = new Date();
-                const options = {
-                    year: 'numeric', month: '2-digit', day: '2-digit',
-                    hour: '2-digit', minute: '2-digit', second: '2-digit',
-                    hour12: false,
-                    timeZone: 'America/Fortaleza' 
-                };
-                ws_data.push([`Gerado em: ${now.toLocaleString('pt-BR', options)}`]);
-                ws_data.push([]); // Linha em branco para separação
-                ws_data.push([]); // Mais uma linha em branco para melhor separação
-
-                // Tabela de Pagamentos por Colaborador
-                ws_data.push(["Pagamentos por Colaborador"]); // Título da seção
-                ws_data.push([]); // Linha em branco
-                ws_data.push(["Nome Completo", "Chave PIX", "Valor Total"]); // Cabeçalhos da tabela
-                pagamentos.forEach(p => {
-                    ws_data.push([p.nome, p.pix, parseFloat(p.total)]); // Passa o total como número
-                });
-                ws_data.push([]); // Linha em branco
-                ws_data.push([]); // Mais uma linha em branco para melhor separação
-
-                // Tabela de Gastos por Setor
-                ws_data.push(["Gastos por Setor"]); // Título da seção
-                ws_data.push([]); // Linha em branco
-                ws_data.push(["Setor", "Valor Total"]); // Cabeçalhos da tabela
-                gastos.forEach(g => {
-                    ws_data.push([g.setor, parseFloat(g.total)]); // Passa o total como número
-                });
-                ws_data.push([]); // Linha em branco
-                ws_data.push([]); // Mais uma linha em branco para melhor separação
-
-                // Total Geral
-                ws_data.push(["TOTAL GERAL", parseFloat(totalGeral)]); // Passa o total como número
-
-                console.log("Dados finais para a planilha XLSX:", ws_data);
-
-                const ws = XLSX.utils.aoa_to_sheet(ws_data);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Relatório Diárias");
-                
-                const filename = `Relatorio_Diarias_${periodo.inicio}_a_${periodo.fim}.xlsx`;
-                console.log("Tentando gerar arquivo XLSX:", filename);
-                XLSX.writeFile(wb, filename);
+                XLSX.utils.book_append_sheet(wb, ws_diarias, "Diárias Detalhadas");
+                XLSX.utils.book_append_sheet(wb, ws_pagamentos, "Resumo de Pagamentos");
+                XLSX.utils.book_append_sheet(wb, ws_gastos, "Gastos por Setor");
 
-                alert('Relatório XLSX gerado com sucesso!');
-                console.log("Arquivo XLSX gerado com sucesso (XLSX.writeFile chamado).");
+                XLSX.writeFile(wb, `Relatorio_Diarias_${dataInicio}_a_${dataFim}.xlsx`);
             }
 
-
-            // --- LÓGICA DE CRIAÇÃO DE LOGIN ---
-            function generateRandomNumericPassword(length = 6) {
-                let password = '';
-                for (let i = 0; i < length; i++) {
-                    password += Math.floor(Math.random() * 10).toString();
-                }
-                return password;
-            }
-
+            // --- FUNÇÕES DE ADMINISTRAÇÃO DE USUÁRIOS ---
             async function handleCreateUser() {
-                createUserErrorMessage.style.display = 'none';
-                const email = createUserEmailInput.value.trim();
-                const generatedPassword = generateRandomNumericPassword(); 
-                
-                generatedPasswordDisplay.value = generatedPassword; 
-
+                const email = createUserEmailInput.value;
                 if (!email) {
-                    createUserErrorMessage.textContent = 'Por favor, preencha o email.';
-                    createUserErrorMessage.style.display = 'block';
+                    alert("Por favor, insira um email.");
                     return;
                 }
+                const password = Math.random().toString(36).slice(-8); // Senha aleatória
+                generatedPasswordDisplay.value = password;
+                createUserErrorMessage.style.display = 'none';
 
-                if (currentUser.id !== ADMIN_USER_ID) {
-                    createUserErrorMessage.textContent = 'Você não tem permissão para criar novos usuários. Entre em contato com o administrador.';
+                const { data, error } = await _supabase.auth.signUp({ email, password });
+
+                if (error) {
+                    createUserErrorMessage.textContent = `Erro: ${error.message}`;
                     createUserErrorMessage.style.display = 'block';
-                    return;
-                }
-
-                try {
-                    const { data, error } = await _supabase.auth.signUp({
-                        email: email,
-                        password: generatedPassword, 
-                    });
-
-                    if (error) {
-                        createUserErrorMessage.textContent = `Erro ao criar usuário: ${error.message}`;
-                        createUserErrorMessage.style.display = 'block';
-                    } else if (data.user) {
-                        alert(`Usuário ${data.user.email} criado com sucesso! Senha: ${generatedPassword}. Um e-mail de confirmação pode ter sido enviado, dependendo da configuração do Supabase Auth.`);
-                        createUserEmailInput.value = '';
-                    }
-                } catch (error) {
-                    console.error("Erro inesperado na criação de usuário:", error);
-                    createUserErrorMessage.textContent = `Erro inesperado: ${error.message}`;
-                    createUserErrorMessage.style.display = 'block';
+                } else {
+                    alert(`Usuário ${email} criado com sucesso! A senha é: ${password}. Guarde esta senha em um local seguro.`);
+                    createUserEmailInput.value = '';
+                    generatedPasswordDisplay.value = '';
                 }
             }
 
-            // --- LÓGICA DE LISTAR LOGINS ---
             async function showListarLoginsScreen() {
-                usersTableBody.innerHTML = '<tr><td colspan="1" style="text-align: center; padding: 20px;">Carregando usuários...</td></tr>';
+                usersTableBody.innerHTML = '<tr><td style="text-align: center; padding: 20px;">Carregando usuários...</td></tr>';
                 listarLoginsMessage.style.display = 'none';
+                showScreen('listarLogins');
 
-                if (currentUser.id !== ADMIN_USER_ID) {
-                    listarLoginsMessage.textContent = 'Você não tem permissão para visualizar esta tela.';
+                const { data: { users }, error } = await _supabase.auth.admin.listUsers();
+                if (error) {
+                    console.error("Erro ao listar usuários:", error);
+                    listarLoginsMessage.textContent = `Erro: ${error.message}`;
                     listarLoginsMessage.style.display = 'block';
                     usersTableBody.innerHTML = '';
-                    showScreen('listarLogins'); 
                     return;
                 }
-
-                try {
-                    const { data: allUsers, error: allUsersError } = await _supabase
-                        .from('perfis') 
-                        .select('id, email, nome_completo'); 
-
-                    if (allUsersError) {
-                        console.error("Erro ao buscar usuários (tabela perfis):", allUsersError.message || allUsersError.details || allUsersError); 
-                        listarLoginsMessage.textContent = `Erro ao carregar usuários: ${allUsersError.message || 'Detalhes no console.'}.`;
-                        listarLoginsMessage.style.display = 'block';
-                        usersTableBody.innerHTML = '<tr><td colspan="1" style="text-align: center; padding: 20px;">Erro ao carregar usuários.</td></tr>';
-                        return;
-                    }
-                    
-                    usersTableBody.innerHTML = '';
-                    if (allUsers.length === 0) {
-                        usersTableBody.innerHTML = '<tr><td colspan="1" style="text-align: center; padding: 20px;">Nenhum usuário encontrado.</td></tr>';
-                    } else {
-                        allUsers.forEach(user => {
-                            const row = usersTableBody.insertRow();
-                            row.innerHTML = `
-                                <td>${user.email || 'N/A'}</td>
-                            `;
-                        });
-                    }
-                } catch (error) {
-                    console.error("Erro inesperado ao listar usuários:", error);
-                    listarLoginsMessage.textContent = `Erro inesperado: ${error.message}.`;
-                    listarLoginsMessage.style.display = 'block';
-                    usersTableBody.innerHTML = '<tr><td colspan="1" style="text-align: center; padding: 20px;">Erro ao carregar usuários.</td></tr>';
-                }
-                showScreen('listarLogins');
+                usersTableBody.innerHTML = '';
+                users.forEach(user => {
+                    const row = usersTableBody.insertRow();
+                    row.innerHTML = `<td>${user.email}</td>`;
+                });
             }
 
-            // --- LÓGICA DE ALTERAR SENHA ---
             async function handleChangePassword() {
-                changePasswordErrorMessage.style.display = 'none';
-                const currentPassword = currentPasswordInput.value.trim();
-                const newPassword = newPasswordInput.value.trim();
-                const confirmNewPassword = confirmNewPasswordInput.value.trim();
-
-                if (!currentPassword || !newPassword || !confirmNewPassword) {
-                    changePasswordErrorMessage.textContent = 'Por favor, preencha todos os campos.';
-                    changePasswordErrorMessage.style.display = 'block';
-                    return;
-                }
-                if (newPassword !== confirmNewPassword) {
-                    changePasswordErrorMessage.textContent = 'A nova senha e a confirmação não coincidem.';
+                const newPassword = newPasswordInput.value;
+                if (newPassword !== confirmNewPasswordInput.value) {
+                    changePasswordErrorMessage.textContent = "As novas senhas não coincidem.";
                     changePasswordErrorMessage.style.display = 'block';
                     return;
                 }
                 if (newPassword.length < 6) {
-                    changePasswordErrorMessage.textContent = 'A nova senha deve ter pelo menos 6 caracteres.';
+                    changePasswordErrorMessage.textContent = "A nova senha deve ter pelo menos 6 caracteres.";
                     changePasswordErrorMessage.style.display = 'block';
                     return;
                 }
+                changePasswordErrorMessage.style.display = 'none';
 
-                try {
-                    const { error: reauthError } = await _supabase.auth.signInWithPassword({
-                        email: currentUser.email,
-                        password: currentPassword
-                    });
-
-                    if (reauthError) {
-                        if (reauthError.message.includes('Invalid login credentials') || reauthError.message.includes('AuthApiError: Invalid login credentials')) {
-                             changePasswordErrorMessage.textContent = 'Senha atual incorreta.';
-                        } else {
-                            changePasswordErrorMessage.textContent = `Erro de reautenticação: ${reauthError.message}`;
-                        }
-                        changePasswordErrorMessage.style.display = 'block';
-                        return;
-                    }
-
-                    const { error: updateError } = await _supabase.auth.updateUser({
-                        password: newPassword
-                    });
-
-                    if (updateError) {
-                        changePasswordErrorMessage.textContent = `Erro ao alterar senha: ${updateError.message}`;
-                        changePasswordErrorMessage.style.display = 'block';
-                    } else {
-                        alert('Senha alterada com sucesso! Você será desconectado para logar com a nova senha.');
-                        await _supabase.auth.signOut(); 
-                        showScreen('login');
-                        currentPasswordInput.value = '';
-                        newPasswordInput.value = '';
-                        confirmNewPasswordInput.value = '';
-                    }
-                } catch (error) {
-                    console.error("Erro inesperado na alteração de senha:", error);
-                    changePasswordErrorMessage.textContent = `Erro inesperado: ${error.message}`;
+                const { error } = await _supabase.auth.updateUser({ password: newPassword });
+                if (error) {
+                    changePasswordErrorMessage.textContent = `Erro: ${error.message}`;
                     changePasswordErrorMessage.style.display = 'block';
+                } else {
+                    alert("Senha alterada com sucesso!");
+                    showScreen('dashboard');
                 }
             }
 
-
-            // --- NOVAS FUNCIONALIDADES: GERENCIAR DIÁRIAS E HISTÓRICO ---
-            
-            // --- Gerenciar Diárias (screenGerenciarDiarias) ---
+            // --- FUNÇÕES DE GERENCIAMENTO DE DIÁRIAS (EDITAR/DELETAR) ---
             async function showGerenciarDiariasScreen() {
-                // CORRIGIDO: Certifica-se de que o modal esteja fechado ao carregar a tela
-                editDiariaModal.classList.remove('active'); 
-
                 gerenciarDiariasTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Carregando diárias...</td></tr>';
                 showScreen('gerenciarDiarias');
+                const { data, error } = await _supabase.from('diarias')
+                    .select(`*, colaboradores(nome_completo)`)
+                    .order('data_diaria', { ascending: false })
+                    .limit(50); // Limita a 50 mais recentes para performance
 
-                const { data: diariasData, error: diariasError } = await _supabase
-                    .from('diarias_lancadas')
-                    .select(`
-                        id,
-                        data_diaria,
-                        valor_pago,
-                        dobrou,
-                        horas_trabalhadas,
-                        horario_entrada,
-                        horario_saida,
-                        funcao_colaborador,
-                        setor_colaborador,
-                        colaborador_id,
-                        user_id
-                    `)
-                    .order('data_diaria', { ascending: false });
-
-                if (diariasError) {
-                    console.error("Erro ao buscar diárias para gerenciamento:", diariasError.message || diariasError.details || diariasError); 
-                    gerenciarDiariasTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px;">Erro ao carregar diárias: ${diariasError.message || 'Verifique o console para detalhes.'}</td></tr>`;
+                if (error) {
+                    console.error("Erro ao buscar diárias para gerenciamento:", error);
+                    gerenciarDiariasTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Erro ao carregar.</td></tr>';
                     return;
                 }
-                diariasCache = diariasData; 
+                renderGerenciarDiariasTable(data);
+            }
 
+            function renderGerenciarDiariasTable(diarias) {
                 gerenciarDiariasTableBody.innerHTML = '';
-                if (diariasCache.length === 0) {
+                if (diarias.length === 0) {
                     gerenciarDiariasTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Nenhuma diária lançada.</td></tr>';
                     return;
                 }
-
-                // Carregar nomes de colaboradores e perfis para exibição
-                const { data: colabsData, error: colabsError } = await _supabase.from('colaboradores').select('id, nome_completo');
-                if (colabsError) { console.error("Erro ao buscar nomes de colaboradores:", colabsError); return; }
-                const colabsMap = new Map(colabsData.map(c => [c.id, c.nome_completo]));
-
-                const { data: perfisData, error: perfisError } = await _supabase.from('perfis').select('id, email, nome_completo');
-                if (perfisError) { console.error("Erro ao buscar nomes/emails de perfis:", perfisError); return; }
-                const perfisMap = new Map();
-                perfisData.forEach(p => {
-                    perfisMap.set(p.id, p.nome_completo || p.email);
-                });
-
-
-                diariasCache.forEach(diaria => {
+                diarias.forEach(d => {
                     const row = gerenciarDiariasTableBody.insertRow();
-                    const colaboradorNome = colabsMap.get(diaria.colaborador_id) || 'Desconhecido'; 
-                    // CORRIGIDO: Fallback para user_id (truncado) se nome/email não for encontrado no perfil
-                    const lancadoPor = perfisMap.get(diaria.user_id) || (diaria.user_id ? `ID: ${diaria.user_id.substring(0, 8)}...` : 'N/A');
-                    if (!perfisMap.has(diaria.user_id) && diaria.user_id) {
-                         console.warn(`User ID ${diaria.user_id} em diárias_lancadas não encontrado na tabela perfis.`);
-                    }
-                    
                     row.innerHTML = `
-                        <td>${colaboradorNome}</td> <td>${new Date(diaria.data_diaria + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                        <td>${diaria.funcao_colaborador}</td>
-                        <td>${diaria.setor_colaborador}</td>
-                        <td>R$ ${diaria.valor_pago.toFixed(2).replace('.', ',')}</td>
-                        <td>${lancadoPor}</td>
+                        <td>${d.colaboradores.nome_completo}</td>
+                        <td>${new Date(d.data_diaria + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                        <td>${d.funcao}</td>
+                        <td>${d.setor}</td>
+                        <td>${d.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                        <td>${d.lancado_por}</td>
                         <td>
-                            <button class="btn-secondary btn-sm" data-action="edit-diaria" data-id="${diaria.id}" style="padding: 5px 10px; font-size: 0.8rem;">Editar</button>
-                            <button class="btn-danger btn-sm" data-action="delete-diaria" data-id="${diaria.id}" style="padding: 5px 10px; font-size: 0.8rem;">Excluir</button>
+                            <button class="btn-secondary edit-diaria-btn" data-id="${d.id}">Editar</button>
+                            <button class="btn-danger delete-diaria-btn" data-id="${d.id}" style="background-color: var(--color-danger); margin-left: 5px;">Excluir</button>
                         </td>
                     `;
                 });
-
-                gerenciarDiariasTableBody.querySelectorAll('button[data-action="edit-diaria"]').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const id = e.target.dataset.id;
-                        handleEditDiaria(id);
-                    });
-                });
-                gerenciarDiariasTableBody.querySelectorAll('button[data-action="delete-diaria"]').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const id = e.target.dataset.id;
-                        handleDeleteDiaria(id);
-                    });
-                });
+                document.querySelectorAll('.edit-diaria-btn').forEach(btn => btn.addEventListener('click', handleEditDiaria));
+                document.querySelectorAll('.delete-diaria-btn').forEach(btn => btn.addEventListener('click', handleDeleteDiaria));
             }
 
-            // --- Gerenciar Diárias: Lógica de Edição ---
-            async function handleEditDiaria(diariaId) {
-                const diaria = diariasCache.find(d => d.id === diariaId);
-                if (!diaria) {
-                    alert('Diária não encontrada para edição.');
+            async function handleEditDiaria(event) {
+                const diariaId = event.target.dataset.id;
+                const { data, error } = await _supabase.from('diarias').select(`*, colaboradores(nome_completo)`).eq('id', diariaId).single();
+                if (error) {
+                    alert("Erro ao carregar dados da diária.");
+                    console.error(error);
                     return;
                 }
 
-                editDiariaIdInput.value = diaria.id;
-                // Busca o nome do colaborador a partir do cache de colaboradores
-                const colaboradorEdit = colaboradoresCache.find(c => c.id === diaria.colaborador_id);
-                editDiariaColaboradorNomeInput.value = colaboradorEdit?.nome_completo || 'Desconhecido';
-                editDiariaColaboradorNomeInput.dataset.colabId = diaria.colaborador_id; 
+                editDiariaIdInput.value = data.id;
+                editDiariaColaboradorNomeInput.value = data.colaboradores.nome_completo;
+                editDiariaDataInput.value = data.data_diaria;
+                editDiariaFuncaoSelect.value = data.funcao;
+                editDiariaSetorSelect.value = data.setor;
+                editDiariaValorInput.value = data.valor.toFixed(2);
+                editDiariaDobrouCheckbox.checked = data.dobrou;
+                editDiariaHoraEntradaInput.value = data.hora_entrada;
+                editDiariaHoraSaidaInput.value = data.hora_saida;
 
-                editDiariaDataInput.value = diaria.data_diaria;
-                editDiariaFuncaoSelect.value = diaria.funcao_colaborador;
-                editDiariaSetorSelect.value = diaria.setor_colaborador;
-                editDiariaDobrouCheckbox.checked = diaria.dobrou;
-                editDiariaHoraEntradaInput.value = diaria.horario_entrada || '';
-                editDiariaHoraSaidaInput.value = diaria.horario_saida || '';
+                // Mostra/esconde campos dinâmicos com base na regra
+                await toggleDiariaFields(true);
                 
-                // Força o cálculo e atualização do campo de valor logo ao abrir o modal
-                calculateAndSetDiariaValue(true);
-
-                // Ajustar visibilidade dos campos de horas na edição
-                toggleDiariaFields(true); // true para contexto de edição
-
-                editDiariaModal.classList.add('active'); // CORRIGIDO: Adiciona a classe 'active' para exibir
+                editDiariaModal.classList.add('active');
             }
-
-            // Lógica para calcular e atualizar o valor no modal de edição
-            editDiariaFuncaoSelect.addEventListener('change', () => calculateAndSetDiariaValue(true));
-            editDiariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(true)); 
-            editDiariaHoraEntradaInput.addEventListener('change', () => calculateAndSetDiariaValue(true));
-            editDiariaHoraSaidaInput.addEventListener('change', () => calculateAndSetDiariaValue(true));
-
 
             async function handleSaveEditDiaria() {
                 const diariaId = editDiariaIdInput.value;
-                const dataDiaria = editDiariaDataInput.value;
-                const funcaoColaborador = editDiariaFuncaoSelect.value;
-                const setorColaborador = editDiariaSetorSelect.value;
-                const dobrou = editDiariaDobrouCheckbox.checked;
-                const horarioEntrada = editDiariaHoraEntradaInput.value;
-                const horarioSaida = editDiariaHoraSaidaInput.value;
-
-                // Recalcular o valor e horas com base nos novos dados
-                const { valorCalculado, horasTrabalhadas } = calculateAndSetDiariaValue(true); 
-                
-                // Validação específica para "Fixo com Dobra"
-                const regra = regrasPagamentoCache.find(r => r.funcao === funcaoColaborador && r.tipo_calculo === 'Fixo com Dobra');
-                if (regra) {
-                    if (!dobrou && (!horarioEntrada || !horarioSaida)) {
-                        alert('Para esta função, preencha o horário de entrada e saída, ou marque que dobrou o turno.'); 
-                        return;
-                    }
-                }
-                
-                const updatedFields = {
-                    data_diaria: dataDiaria,
-                    valor_pago: valorCalculado,
-                    dobrou: dobrou,
-                    horas_trabalhadas: horasTrabalhadas,
-                    horario_entrada: horarioEntrada || null,
-                    horario_saida: horarioSaida || null,
-                    funcao_colaborador: funcaoColaborador,
-                    setor_colaborador: setorColaborador
+                const updatedData = {
+                    data_diaria: editDiariaDataInput.value,
+                    funcao: editDiariaFuncaoSelect.value,
+                    setor: editDiariaSetorSelect.value,
+                    valor: parseFloat(editDiariaValorInput.value),
+                    dobrou: editDiariaDobrouCheckbox.checked,
+                    hora_entrada: editDiariaHoraEntradaInput.value || null,
+                    hora_saida: editDiariaHoraSaidaInput.value || null,
                 };
 
-                const { error } = await _supabase
-                    .from('diarias_lancadas')
-                    .update(updatedFields)
-                    .eq('id', diariaId);
-
-                if (error) {
-                    alert(`Erro ao atualizar diária: ${error.message}`);
-                    console.error("Erro na atualização da diária:", error);
-                } else {
-                    alert('Diária atualizada com sucesso!');
-                    editDiariaModal.classList.remove('active'); // CORRIGIDO: Remove a classe 'active' para fechar
-                    showGerenciarDiariasScreen(); 
-                }
-            }
-
-            // --- Gerenciar Diárias: Lógica de Exclusão ---
-            async function handleDeleteDiaria(diariaId) {
-                if (!confirm('Tem certeza que deseja excluir esta diária? Esta ação não pode ser desfeita.')) {
+                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias').select('*, colaboradores(nome_completo)').eq('id', diariaId).single();
+                if (fetchError) {
+                    alert("Erro ao buscar dados antigos da diária para log.");
                     return;
                 }
 
-                const { error } = await _supabase
-                    .from('diarias_lancadas')
-                    .delete()
-                    .eq('id', diariaId);
-
+                const { data, error } = await _supabase.from('diarias').update(updatedData).eq('id', diariaId).select().single();
                 if (error) {
-                    alert(`Erro ao excluir diária: ${error.message}`);
-                    console.error("Erro na exclusão da diária:", error);
+                    alert("Erro ao salvar alterações.");
+                    console.error(error);
                 } else {
-                    alert('Diária excluída com sucesso!');
-                    showGerenciarDiariasScreen(); 
+                    const { data: { user } } = await _supabase.auth.getUser();
+                    await logAction('UPDATED', diariaId, user.email, `Diária de ${oldDiaria.colaboradores.nome_completo} (R$ ${oldDiaria.valor.toFixed(2)}) atualizada para R$ ${data.valor.toFixed(2)}.`);
+                    alert("Diária atualizada com sucesso!");
+                    editDiariaModal.classList.remove('active');
+                    showGerenciarDiariasScreen();
                 }
             }
 
-            // --- Histórico (screenHistorico) ---
+            async function handleDeleteDiaria(event) {
+                const diariaId = event.target.dataset.id;
+                if (!confirm("Tem certeza que deseja excluir esta diária? Esta ação não pode ser desfeita.")) {
+                    return;
+                }
+
+                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias').select('*, colaboradores(nome_completo)').eq('id', diariaId).single();
+                 if (fetchError) {
+                    alert("Erro ao buscar dados da diária para log.");
+                    return;
+                }
+
+                const { error } = await _supabase.from('diarias').delete().eq('id', diariaId);
+                if (error) {
+                    alert("Erro ao excluir diária.");
+                    console.error(error);
+                } else {
+                    const { data: { user } } = await _supabase.auth.getUser();
+                    await logAction('DELETED', diariaId, user.email, `Diária de ${oldDiaria.colaboradores.nome_completo} (R$ ${oldDiaria.valor.toFixed(2)}) foi excluída.`);
+                    alert("Diária excluída com sucesso!");
+                    showGerenciarDiariasScreen();
+                }
+            }
+
+            // --- FUNÇÕES DE LOG (HISTÓRICO) ---
+            async function logAction(action, diaria_id, user_email, details) {
+                const { error } = await _supabase.from('historico_diarias').insert([{
+                    action: action,
+                    diaria_id: diaria_id,
+                    user_email: user_email,
+                    details: details
+                }]);
+                if (error) {
+                    console.error("Erro ao registrar ação no histórico:", error);
+                }
+            }
+
             async function showHistoricoScreen() {
-                // Ajustado colspan para 5, com a coluna Diária ID restaurada
-                historicoTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>';
+                historicoTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>';
                 showScreen('historico');
-
-                const { data, error } = await _supabase
-                    .from('diaria_historico')
-                    .select(`
-                        id,
-                        diaria_id,
-                        user_id,
-                        user_email,
-                        action,
-                        old_data,
-                        new_data,
-                        timestamp
-                    `)
-                    .order('timestamp', { ascending: false });
+                const { data, error } = await _supabase.from('historico_diarias')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(100);
 
                 if (error) {
-                    console.error("Erro ao buscar histórico:", error.message || error.details || error); 
-                    historicoTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">Erro ao carregar histórico: ${error.message || 'Verifique o console para detalhes.'}</td></tr>`;
+                    console.error("Erro ao buscar histórico:", error);
+                    historicoTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Erro ao carregar.</td></tr>';
                     return;
                 }
+                renderHistoricoTable(data);
+            }
 
+            function renderHistoricoTable(historico) {
                 historicoTableBody.innerHTML = '';
-                if (data.length === 0) {
-                    historicoTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Nenhum registro no histórico.</td></tr>';
+                if (historico.length === 0) {
+                    historicoTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Nenhum registro no histórico.</td></tr>';
                     return;
                 }
-
-                data.forEach(record => {
+                historico.forEach(h => {
                     const row = historicoTableBody.insertRow();
-                    const recordDate = new Date(record.timestamp).toLocaleString('pt-BR');
-                    const actionDetails = formatHistoryDetails(record.action, record.old_data, record.new_data);
-                    
+                    // ALTERAÇÃO: Células removidas para corresponder ao novo cabeçalho
                     row.innerHTML = `
-                        <td>${recordDate}</td>
-                        <td>${record.action.toUpperCase()}</td>
-                        <td>${record.diaria_id ? record.diaria_id.substring(0, 8) + '...' : 'N/A'}</td> <td>${record.user_email || 'Desconhecido'}</td>
-                        <td>${actionDetails}</td>
+                        <td>${new Date(h.created_at).toLocaleString('pt-BR')}</td>
+                        <td>${h.user_email}</td>
+                        <td>${h.details}</td>
                     `;
                 });
             }
 
-            // Função auxiliar para formatar detalhes do histórico
-            function formatHistoryDetails(action, oldData, newData) {
-                const getColabNameFromData = (dataObj) => {
-                    if (dataObj && dataObj.colaborador_id) { 
-                        const colab = colaboradoresCache.find(c => c.id === dataObj.colaborador_id);
-                        if (colab) return colab.nome_completo;
-                    }
-                    return dataObj?.funcao_colaborador || 'colaborador';
-                };
-
-                switch (action) {
-                    case 'created':
-                        return `Diária de ${getColabNameFromData(newData)} (R$ ${newData?.valor_pago?.toFixed(2).replace('.', ',')}) criada.`;
-                    case 'updated':
-                        let details = `Diária de ${getColabNameFromData(oldData)} alterada. `;
-                        if (oldData?.valor_pago !== newData?.valor_pago) {
-                            details += `Valor: R$ ${oldData?.valor_pago?.toFixed(2).replace('.', ',')} -> R$ ${newData?.valor_pago?.toFixed(2).replace('.', ',')}. `;
-                        }
-                        if (oldData?.funcao_colaborador !== newData?.funcao_colaborador) {
-                            details += `Função: ${oldData?.funcao_colaborador} -> ${newData?.funcao_colaborador}. `;
-                        }
-                        if (oldData?.data_diaria !== newData?.data_diaria) {
-                            details += `Data: ${new Date(oldData?.data_diaria + 'T00:00:00').toLocaleDateString('pt-BR')} -> ${new Date(newData?.data_diaria + 'T00:00:00').toLocaleDateString('pt-BR')}. `;
-                        }
-                        return details.trim();
-                    case 'deleted':
-                        return `Diária de ${getColabNameFromData(oldData)} (R$ ${oldData?.valor_pago?.toFixed(2).replace('.', ',')}) excluída.`;
-                    default:
-                        return JSON.stringify(newData || oldData || {});
+            // --- FUNÇÕES DE REGRAS DE PAGAMENTO ---
+            async function fetchRegrasPagamento() {
+                const { data, error } = await _supabase.from('regras_pagamento').select('*');
+                if (error) {
+                    console.error("Erro ao buscar regras de pagamento:", error);
+                    alert("Erro crítico: Não foi possível carregar as regras de pagamento.");
+                    regras_pagamento = [];
+                } else {
+                    regras_pagamento = data;
+                    // Preenche os selects de função com base nas regras
+                    populateFuncaoSelects();
                 }
             }
+            
+            function populateFuncaoSelects() {
+                const funcoes = [...new Set(regras_pagamento.map(r => r.funcao))].sort();
+                const selects = [colabFuncaoSelect, editDiariaFuncaoSelect];
+                
+                selects.forEach(select => {
+                    if (!select) return;
+                    // Guarda o valor selecionado se houver
+                    const currentValue = select.value;
+                    select.innerHTML = '<option value="">-- Selecione a Função --</option>';
+                    funcoes.forEach(funcao => {
+                        select.innerHTML += `<option value="${funcao}">${funcao}</option>`;
+                    });
+                    // Restaura o valor se ele ainda for uma opção válida
+                    if (funcoes.includes(currentValue)) {
+                        select.value = currentValue;
+                    }
+                });
+            }
 
-            // --- Gerenciar Regras de Pagamento ---
             async function showGerenciarRegrasScreen() {
-                regrasPagamentoList.innerHTML = '<p style="text-align: center; padding: 20px;">Carregando regras de pagamento...</p>';
+                regrasPagamentoList.innerHTML = '<p style="text-align: center;">Carregando regras...</p>';
                 showScreen('gerenciarRegras');
                 await fetchRegrasPagamento(); // Garante que as regras estão atualizadas
+                renderRegrasPagamento();
+            }
 
+            function renderRegrasPagamento() {
                 regrasPagamentoList.innerHTML = '';
-                if (regrasPagamentoCache.length === 0) {
-                    regrasPagamentoList.innerHTML = '<p style="text-align: center; padding: 20px;">Nenhuma regra de pagamento cadastrada. Por favor, adicione uma manualmente no banco de dados se necessário.</p>';
+                if (regras_pagamento.length === 0) {
+                    regrasPagamentoList.innerHTML = '<p style="text-align: center;">Nenhuma regra de pagamento cadastrada.</p>';
                     return;
                 }
-
-                regrasPagamentoCache.forEach(regra => {
+                regras_pagamento.sort((a, b) => a.funcao.localeCompare(b.funcao)).forEach(regra => {
                     const regraDiv = document.createElement('div');
-                    regraDiv.classList.add('regra-item');
+                    regraDiv.className = 'regra-item';
                     regraDiv.dataset.id = regra.id;
-
-                    const isFixed = regra.tipo_calculo === 'Fixo';
-                    const isHourlyOrDoubled = regra.tipo_calculo === 'Fixo com Dobra';
-
                     regraDiv.innerHTML = `
-                        <strong>${regra.funcao}</strong>
-                        <div class="form-group">
-                            <label for="tipoCalculo-${regra.id}">Tipo de Cálculo:</label>
-                            <select id="tipoCalculo-${regra.id}" data-field="tipo_calculo" data-id="${regra.id}">
-                                <option value="Fixo" ${isFixed ? 'selected' : ''}>Fixo</option>
-                                <option value="Fixo com Dobra" ${isHourlyOrDoubled ? 'selected' : ''}>Fixo com Dobra</option>
-                            </select>
-                        </div>
+                        <strong>Função: ${regra.funcao}</strong>
                         <div class="regra-fields">
-                            <div class="form-group" id="valorBaseGroup-${regra.id}">
-                                <label for="valorBase-${regra.id}">Valor Base (R$):</label>
-                                <input type="number" step="0.01" id="valorBase-${regra.id}" value="${regra.valor_base}" data-field="valor_base" data-id="${regra.id}">
+                            <div class="form-group">
+                                <label for="tipoCalculo-${regra.id}">Tipo de Cálculo</label>
+                                <select id="tipoCalculo-${regra.id}" data-id="${regra.id}" data-field="tipo_calculo">
+                                    <option value="Fixo" ${regra.tipo_calculo === 'Fixo' ? 'selected' : ''}>Fixo</option>
+                                    <option value="Fixo com Dobra" ${regra.tipo_calculo === 'Fixo com Dobra' ? 'selected' : ''}>Fixo com Dobra/Hora Extra</option>
+                                </select>
                             </div>
-                            <div class="form-group" id="horasBaseGroup-${regra.id}">
-                                <label for="horasBase-${regra.id}">Horas Base:</label>
-                                <input type="number" step="1" id="horasBase-${regra.id}" value="${regra.horas_base || ''}" data-field="horas_base" data-id="${regra.id}">
+                            <div class="form-group hidden" id="valorBaseGroup-${regra.id}">
+                                <label for="valorBase-${regra.id}">Valor Base (R$)</label>
+                                <input type="number" step="0.01" id="valorBase-${regra.id}" data-id="${regra.id}" data-field="valor_base" value="${regra.valor_base || ''}">
                             </div>
-                            <div class="form-group" id="valorHoraExtraGroup-${regra.id}">
-                                <label for="valorHoraExtra-${regra.id}">Valor Hora Extra (R$):</label>
-                                <input type="number" step="0.01" id="valorHoraExtra-${regra.id}" value="${regra.valor_hora_extra || ''}" data-field="valor_hora_extra" data-id="${regra.id}">
+                            <div class="form-group hidden" id="horasBaseGroup-${regra.id}">
+                                <label for="horasBase-${regra.id}">Horas Base</label>
+                                <input type="number" step="0.1" id="horasBase-${regra.id}" data-id="${regra.id}" data-field="horas_base" value="${regra.horas_base || ''}">
                             </div>
-                            <div class="form-group" id="valorDobraSemanaGroup-${regra.id}">
-                                <label for="valorDobraSemana-${regra.id}">Valor Dobra (Semana - R$):</label>
-                                <input type="number" step="0.01" id="valorDobraSemana-${regra.id}" value="${regra.valor_dobra_semana || ''}" data-field="valor_dobra_semana" data-id="${regra.id}">
+                            <div class="form-group hidden" id="valorHoraExtraGroup-${regra.id}">
+                                <label for="valorHoraExtra-${regra.id}">Valor Hora Extra (R$)</label>
+                                <input type="number" step="0.01" id="valorHoraExtra-${regra.id}" data-id="${regra.id}" data-field="valor_hora_extra" value="${regra.valor_hora_extra || ''}">
                             </div>
-                            <div class="form-group" id="valorDobraFDSGroup-${regra.id}">
-                                <label for="valorDobraFDS-${regra.id}">Valor Dobra (FDS - R$):</label>
-                                <input type="number" step="0.01" id="valorDobraFDS-${regra.id}" value="${regra.valor_dobra_fds || ''}" data-field="valor_dobra_fds" data-id="${regra.id}">
+                            <div class="form-group hidden" id="valorDobraSemanaGroup-${regra.id}">
+                                <label for="valorDobraSemana-${regra.id}">Valor Dobra (Semana)</label>
+                                <input type="number" step="0.01" id="valorDobraSemana-${regra.id}" data-id="${regra.id}" data-field="valor_dobra_semana" value="${regra.valor_dobra_semana || ''}">
+                            </div>
+                            <div class="form-group hidden" id="valorDobraFDSGroup-${regra.id}">
+                                <label for="valorDobraFDS-${regra.id}">Valor Dobra (FDS)</label>
+                                <input type="number" step="0.01" id="valorDobraFDS-${regra.id}" data-id="${regra.id}" data-field="valor_dobra_fds" value="${regra.valor_dobra_fds || ''}">
                             </div>
                         </div>
                         <div class="regra-buttons">
-                            <button class="btn-primary btn-sm save-regra-btn" data-id="${regra.id}">Salvar</button>
+                            <button class="btn-primary save-regra-btn" data-id="${regra.id}">Salvar</button>
                         </div>
                     `;
                     regrasPagamentoList.appendChild(regraDiv);
@@ -2373,7 +2010,7 @@
                         <td>${formatCpf(colab.cpf) || 'N/A'}</td>
                         <td>${formatTelefone(colab.telefone) || 'N/A'}</td>
                         <td>${colab.endereco || 'N/A'}</td>
-                        <td>${colab.data_nascimento ? new Date(colab.data_nascimento).toLocaleDateString('pt-BR') : 'N/A'}</td>
+                        <td>${colab.data_nascimento ? new Date(colab.data_nascimento).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'N/A'}</td>
                         <td>${colab.nome_mae || 'N/A'}</td>
                     `;
                 });
@@ -2392,6 +2029,7 @@
                     return;
                 }
 
+                const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('landscape'); // 'landscape' para mais colunas
                 const defaultMargin = 15;
                 const usableWidth = doc.internal.pageSize.getWidth() - (defaultMargin * 2);
@@ -2420,7 +2058,7 @@
                         formatCpf(colab.cpf) || '',
                         formatTelefone(colab.telefone) || '',
                         colab.endereco || '',
-                        colab.data_nascimento ? new Date(colab.data_nascimento).toLocaleDateString('pt-BR') : '',
+                        colab.data_nascimento ? new Date(colab.data_nascimento).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : '',
                         colab.nome_mae || ''
                     ]),
                     theme: 'striped',
@@ -2448,8 +2086,8 @@
                         4: { cellWidth: usableWidth * 0.12 }, // CPF
                         5: { cellWidth: usableWidth * 0.12 }, // Telefone
                         6: { cellWidth: usableWidth * 0.16 }, // Endereço
-                        7: { cellWidth: usableWidth * 0.05 }, // Nasc.
-                        8: { cellWidth: usableWidth * 0.05 }  // Nome Mãe
+                        7: { cellWidth: 'auto' }, // Nasc.
+                        8: { cellWidth: 'auto' }  // Nome Mãe
                     },
                     didDrawPage: function (data) {
                         let str = "Página " + doc.internal.getNumberOfPages();
@@ -2466,9 +2104,6 @@
 
             // --- INICIALIZAÇÃO E LISTENERS GERAIS ---
             async function initializeApp() {
-                // Carregar regras de pagamento logo na inicialização
-                await fetchRegrasPagamento();
-
                 // Login
                 loginButton.addEventListener('click', handleLogin);
                 logoutButton.addEventListener('click', handleLogout);
@@ -2531,7 +2166,6 @@
                         resumoGastosDiv.style.display = 'none';
                     }
                 });
-                // REMOVIDO: Event Listener para gerarRelatorioPdf
                 if(btnGerarRelatorioXlsx) btnGerarRelatorioXlsx.addEventListener('click', gerarRelatorioXlsx);
 
                 // Criação de Login
@@ -2576,6 +2210,10 @@
                         editDiariaModal.classList.remove('active');
                     }
                 });
+                editDiariaFuncaoSelect.addEventListener('change', () => toggleDiariaFields(true));
+                editDiariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(true));
+                editDiariaHoraEntradaInput.addEventListener('change', () => calculateAndSetDiariaValue(true));
+                editDiariaHoraSaidaInput.addEventListener('change', () => calculateAndSetDiariaValue(true));
 
                 // Histórico
                 if(btnGoToHistorico) btnGoToHistorico.addEventListener('click', showHistoricoScreen);
