@@ -1378,17 +1378,19 @@
 
                 const { data: { user } } = await _supabase.auth.getUser();
                 const valorFinal = calculateAndSetDiariaValue(false);
+                const colaboradorSelecionado = colaboradoresCache.find(c => c.id === colaboradorId);
 
                 const diariaData = {
                     colaborador_id: colaboradorId,
                     data_diaria: dataDiaria,
-                    valor: valorFinal,
-                    funcao: diariaFuncaoInput.value,
-                    setor: diariaSetorInput.value,
-                    lancado_por: user.email,
+                    valor_pago: valorFinal.valorCalculado, // Corrigido
+                    funcao_colaborador: colaboradorSelecionado.funcao, // Corrigido
+                    setor_colaborador: colaboradorSelecionado.setor, // Corrigido
+                    user_id: user.id, // Corrigido
                     dobrou: diariaDobrouCheckbox.checked,
-                    hora_entrada: diariaHoraEntradaInput.value || null,
-                    hora_saida: diariaHoraSaidaInput.value || null
+                    horario_entrada: diariaHoraEntradaInput.value || null,
+                    horario_saida: diariaHoraSaidaInput.value || null,
+                    horas_trabalhadas: valorFinal.horasTrabalhadas
                 };
 
                 const { data, error } = await _supabase.from('diarias_lancadas').insert([diariaData]).select().single();
@@ -1396,9 +1398,9 @@
                     console.error("Erro ao salvar diária:", error);
                     alert(`Erro ao salvar diária: ${error.message}`);
                 } else {
-                    await logAction('CREATED', data.id, user.email, `Diária de ${diariaColaboradorSelect.options[diariaColaboradorSelect.selectedIndex].text} (R$ ${data.valor.toFixed(2)}) criada.`);
+                    await logAction('CREATED', data.id, user.email, `Diária de ${diariaColaboradorSelect.options[diariaColaboradorSelect.selectedIndex].text} (R$ ${data.valor_pago.toFixed(2)}) criada.`);
                     alert('Diária lançada com sucesso!');
-                    showLancarDiariasScreen(); // Limpa e prepara para o próximo lançamento
+                    showScreen('dashboard');
                 }
             }
 
@@ -1663,17 +1665,20 @@
 
             async function handleSaveEditDiaria() {
                 const diariaId = editDiariaIdInput.value;
+                const { valorCalculado, horasTrabalhadas } = calculateAndSetDiariaValue(true);
+                
                 const updatedData = {
                     data_diaria: editDiariaDataInput.value,
-                    funcao: editDiariaFuncaoSelect.value,
-                    setor: editDiariaSetorSelect.value,
-                    valor: parseFloat(editDiariaValorInput.value),
+                    funcao_colaborador: editDiariaFuncaoSelect.value, // Corrigido
+                    setor_colaborador: editDiariaSetorSelect.value, // Corrigido
+                    valor_pago: valorCalculado, // Corrigido
                     dobrou: editDiariaDobrouCheckbox.checked,
-                    hora_entrada: editDiariaHoraEntradaInput.value || null,
-                    hora_saida: editDiariaHoraSaidaInput.value || null,
+                    horario_entrada: editDiariaHoraEntradaInput.value || null,
+                    horario_saida: editDiariaHoraSaidaInput.value || null,
+                    horas_trabalhadas: horasTrabalhadas
                 };
 
-                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('*, colaboradores(nome_completo)').eq('id', diariaId).single();
+                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('valor_pago, colaboradores(nome_completo)').eq('id', diariaId).single();
                 if (fetchError) {
                     alert("Erro ao buscar dados antigos da diária para log.");
                     return;
@@ -1685,7 +1690,7 @@
                     console.error(error);
                 } else {
                     const { data: { user } } = await _supabase.auth.getUser();
-                    await logAction('UPDATED', diariaId, user.email, `Diária de ${oldDiaria.colaboradores.nome_completo} (R$ ${oldDiaria.valor.toFixed(2)}) atualizada para R$ ${data.valor.toFixed(2)}.`);
+                    await logAction('UPDATED', diariaId, user.email, `Diária de ${oldDiaria.colaboradores.nome_completo} (R$ ${oldDiaria.valor_pago.toFixed(2)}) atualizada para R$ ${data.valor_pago.toFixed(2)}.`);
                     alert("Diária atualizada com sucesso!");
                     editDiariaModal.classList.remove('active');
                     showGerenciarDiariasScreen();
