@@ -955,7 +955,7 @@
 
             let editingColaboradorId = null; 
             let regras_pagamento = [];
-            let colaboradoresCache = []; // CORREÇÃO: Variável global para cache de colaboradores
+            let colaboradoresCache = []; // Variável global para cache de colaboradores
 
             // --- SELETORES DE ELEMENTOS ---
             // Telas
@@ -1052,7 +1052,7 @@
             const btnListarLoginsVoltar = document.getElementById('btnListarLoginsVoltar');
 
             // Alterar Senha
-            const currentPasswordInput = document.getElementById('currentPassword');
+            const currentPasswordInput = document.getElementById('document.getElementById('currentPassword');
             const newPasswordInput = document.getElementById('newPassword');
             const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
             const btnChangePassword = document.getElementById('btnChangePassword');
@@ -1440,15 +1440,15 @@
                 const diariaData = {
                     colaborador_id: colaboradorId,
                     data_diaria: dataDiaria,
-                    valor: valorCalculado, // Usando 'valor' conforme assumido na tabela
-                    funcao: colaboradorSelecionado.funcao, // Usando 'funcao' conforme assumido na tabela
-                    setor: colaboradorSelecionado.setor, // Usando 'setor' conforme assumido na tabela
+                    valor_pago: valorCalculado, // CORRIGIDO: usando 'valor_pago'
+                    funcao_colaborador: colaboradorSelecionado.funcao, // CORRIGIDO: usando 'funcao_colaborador'
+                    setor_colaborador: colaboradorSelecionado.setor, // CORRIGIDO: usando 'setor_colaborador'
                     user_id: user.id,
                     dobrou: diariaDobrouCheckbox.checked,
                     horario_entrada: diariaHoraEntradaInput.value || null,
                     horario_saida: diariaHoraSaidaInput.value || null,
                     horas_trabalhadas: horasTrabalhadas,
-                    lancado_por: user.email // Captura o email do usuário logado
+                    lancado_por: user.email // Captura o email do usuário logado (assumindo que a coluna existe no DB)
                 };
 
                 const { data, error } = await _supabase.from('diarias_lancadas').insert([diariaData]).select().single();
@@ -1456,7 +1456,7 @@
                     console.error("Erro ao salvar diária:", error);
                     alert(`Erro ao salvar diária: ${error.message}`);
                 } else {
-                    await logAction('CREATED', data.id, user.email, `Diária de ${colaboradorSelecionado.nome_completo} (R$ ${data.valor.toFixed(2)}) criada.`);
+                    await logAction('CREATED', data.id, user.email, `Diária de ${colaboradorSelecionado.nome_completo} (R$ ${data.valor_pago.toFixed(2)}) criada.`); // Usando valor_pago
                     alert('Diária lançada com sucesso!');
                     // Limpa o formulário após o lançamento
                     diariaColaboradorSelect.value = '';
@@ -1505,7 +1505,7 @@
                     // Processa pagamentos
                     const nome = d.colaboradores ? d.colaboradores.nome_completo : 'Desconhecido';
                     const pix = d.colaboradores ? d.colaboradores.chave_pix : 'N/A';
-                    const valorDiaria = d.valor || 0; // Use 'valor' conforme a coluna do banco
+                    const valorDiaria = d.valor_pago || 0; // CORRIGIDO: usando 'valor_pago'
                     
                     if (!pagamentos[nome]) {
                         pagamentos[nome] = { valor: 0, pix: pix };
@@ -1513,7 +1513,7 @@
                     pagamentos[nome].valor += valorDiaria;
 
                     // Processa gastos por setor
-                    const setor = d.setor || 'Não Informado'; // Use 'setor'
+                    const setor = d.setor_colaborador || 'Não Informado'; // CORRIGIDO: usando 'setor_colaborador'
                     if (!gastosPorSetor[setor]) {
                         gastosPorSetor[setor] = 0;
                     }
@@ -1542,7 +1542,7 @@
                 // Preenche tabela de gastos
                 resumoGastosBody.innerHTML = '';
                 Object.entries(dados.gastosPorSetor).sort((a, b) => a[0].localeCompare(b[0])).forEach(([setor, valor]) => {
-                    const row = resumoGastosBody.insertRow();
+                    const row = resumoGastosBody.insertCell();
                     row.innerHTML = `
                         <td>${setor}</td>
                         <td class="text-right">${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
@@ -1565,18 +1565,18 @@
 
                 // Aba 1: Diárias Detalhadas
                 const ws_diarias_data = [
-                    ["Data", "Colaborador", "Função", "Setor", "Valor (R$)", "Lançado Por", "Dobrou", "Horário Entrada", "Horário Saída", "Horas Trabalhadas"],
+                    ["Data", "Colaborador", "Função", "Setor", "Valor (R$)", "Dobrou", "Horário Entrada", "Horário Saída", "Horas Trabalhadas", "Lançado Por"],
                     ...diarias.map(d => [
                         new Date(d.data_diaria + 'T00:00:00').toLocaleDateString('pt-BR'),
                         d.colaboradores ? d.colaboradores.nome_completo : 'Desconhecido',
-                        d.funcao,
-                        d.setor,
-                        d.valor,
-                        d.lancado_por,
+                        d.funcao_colaborador, // CORRIGIDO
+                        d.setor_colaborador, // CORRIGIDO
+                        d.valor_pago, // CORRIGIDO
                         d.dobrou ? 'Sim' : 'Não',
                         d.horario_entrada || '',
                         d.horario_saida || '',
-                        d.horas_trabalhadas || 0
+                        d.horas_trabalhadas || 0,
+                        d.lancado_por || 'N/A'
                     ])
                 ];
                 const ws_diarias = XLSX.utils.aoa_to_sheet(ws_diarias_data);
@@ -1699,10 +1699,7 @@
                     row.innerHTML = `
                         <td>${d.colaboradores ? d.colaboradores.nome_completo : 'Desconhecido'}</td>
                         <td>${new Date(d.data_diaria + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                        <td>${d.funcao}</td>
-                        <td>${d.setor}</td>
-                        <td>${(d.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                        <td>${d.lancado_por || 'N/A'}</td>
+                        <td>${d.funcao_colaborador}</td> <td>${d.setor_colaborador}</td> <td>${(d.valor_pago || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td> <td>${d.lancado_por || 'N/A'}</td>
                         <td>
                             <button class="btn-secondary edit-diaria-btn" data-id="${d.id}">Editar</button>
                             <button class="btn-danger delete-diaria-btn" data-id="${d.id}" style="background-color: var(--color-danger); margin-left: 5px;">Excluir</button>
@@ -1732,9 +1729,9 @@
                 editDiariaIdInput.value = data.id;
                 editDiariaColaboradorNomeInput.value = data.colaboradores.nome_completo;
                 editDiariaDataInput.value = data.data_diaria;
-                editDiariaFuncaoSelect.value = data.funcao; // Usa o valor da função da diária
-                editDiariaSetorSelect.value = data.setor;
-                editDiariaValorInput.value = (data.valor || 0).toFixed(2); // Use 'valor'
+                editDiariaFuncaoSelect.value = data.funcao_colaborador; // CORRIGIDO
+                editDiariaSetorSelect.value = data.setor_colaborador; // CORRIGIDO
+                editDiariaValorInput.value = (data.valor_pago || 0).toFixed(2); // CORRIGIDO
                 editDiariaDobrouCheckbox.checked = data.dobrou;
                 editDiariaHoraEntradaInput.value = data.horario_entrada || '';
                 editDiariaHoraSaidaInput.value = data.horario_saida || '';
@@ -1753,16 +1750,16 @@
                 
                 const updatedData = {
                     data_diaria: editDiariaDataInput.value,
-                    funcao: editDiariaFuncaoSelect.value, // Use 'funcao'
-                    setor: editDiariaSetorSelect.value, // Use 'setor'
-                    valor: valorCalculado, // Use 'valor'
+                    funcao_colaborador: editDiariaFuncaoSelect.value, // CORRIGIDO
+                    setor_colaborador: editDiariaSetorSelect.value, // CORRIGIDO
+                    valor_pago: valorCalculado, // CORRIGIDO
                     dobrou: editDiariaDobrouCheckbox.checked,
                     horario_entrada: editDiariaHoraEntradaInput.value || null,
                     horario_saida: editDiariaHoraSaidaInput.value || null,
-                    horas_trabalhadas: horasTrabalhadas
+                    horas_trabalhadas: hoursTrabalhadas
                 };
 
-                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('valor, colaboradores(nome_completo)').eq('id', diariaId).single();
+                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('valor_pago, colaboradores(nome_completo)').eq('id', diariaId).single(); // CORRIGIDO
                 if (fetchError) {
                     alert("Erro ao buscar dados antigos da diária para log.");
                     console.error(fetchError);
@@ -1775,7 +1772,7 @@
                     console.error(error);
                 } else {
                     const { data: { user } } = await _supabase.auth.getUser();
-                    await logAction('UPDATED', diariaId, user.email, `Diária de ${oldDiaria.colaboradores.nome_completo} (R$ ${oldDiaria.valor.toFixed(2)}) atualizada para R$ ${data.valor.toFixed(2)}.`);
+                    await logAction('UPDATED', diariaId, user.email, `Diária de ${oldDiaria.colaboradores.nome_completo} (R$ ${oldDiaria.valor_pago.toFixed(2)}) atualizada para R$ ${data.valor_pago.toFixed(2)}.`); // CORRIGIDO
                     alert("Diária atualizada com sucesso!");
                     editDiariaModal.classList.remove('active');
                     showGerenciarDiariasScreen();
@@ -1788,7 +1785,7 @@
                     return;
                 }
 
-                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('valor, colaboradores(nome_completo)').eq('id', diariaId).single();
+                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('valor_pago, colaboradores(nome_completo)').eq('id', diariaId).single(); // CORRIGIDO
                 if (fetchError) {
                     alert("Erro ao buscar dados da diária para log.");
                     console.error(fetchError);
@@ -1801,7 +1798,7 @@
                     console.error(error);
                 } else {
                     const { data: { user } } = await _supabase.auth.getUser();
-                    await logAction('DELETED', diariaId, user.email, `Diária de ${oldDiaria.colaboradores.nome_completo} (R$ ${oldDiaria.valor.toFixed(2)}) foi excluída.`);
+                    await logAction('DELETED', diariaId, user.email, `Diária de ${oldDiaria.colaboradores.nome_completo} (R$ ${oldDiaria.valor_pago.toFixed(2)}) foi excluída.`); // CORRIGIDO
                     alert("Diária excluída com sucesso!");
                     showGerenciarDiariasScreen();
                 }
@@ -1868,25 +1865,17 @@
             
             function populateFuncaoSelects() {
                 const funcoes = [...new Set(regras_pagamento.map(r => r.funcao))].sort();
-                const selects = [colabFuncaoSelect, editDiariaFuncaoSelect, diariaColaboradorSelect]; // Adicionei diariaColaboradorSelect aqui se ele precisar de funcoes diretamente
+                // O select de diariaColaborador não deve ser populado com funções, mas com colaboradores.
+                // Ajustamos a lógica para popular apenas colabFuncaoSelect e editDiariaFuncaoSelect aqui.
+                const selects = [colabFuncaoSelect, editDiariaFuncaoSelect]; 
                 
                 selects.forEach(select => {
                     if (!select) return;
                     const currentValue = select.value;
-                    let initialOptionText = '-- Selecione a Função --';
-                    if (select.id === 'diariaColaborador') {
-                         initialOptionText = '-- Selecione o Colaborador --';
-                         // Para o select de colaborador, as opções são nomes de colaboradores, não funções diretamente
-                         // A lógica para popular ele já existe em showLancarDiariasScreen
-                         if (select.options.length > 0 && select.options[0].value === "") return; // Já populado ou com placeholder
-                    }
-
-                    select.innerHTML = `<option value="">${initialOptionText}</option>`;
-                    if (select.id !== 'diariaColaborador') { // Função para selects de função
-                        funcoes.forEach(funcao => {
-                            select.innerHTML += `<option value="${funcao}">${funcao}</option>`;
-                        });
-                    }
+                    select.innerHTML = '<option value="">-- Selecione a Função --</option>';
+                    funcoes.forEach(funcao => {
+                        select.innerHTML += `<option value="${funcao}">${funcao}</option>`;
+                    });
                     // Restaura o valor se ele ainda for uma opção válida
                     if (Array.from(select.options).some(option => option.value === currentValue)) {
                         select.value = currentValue;
