@@ -1256,22 +1256,27 @@
 
             // --- FUNÇÕES DE DIÁRIAS ---
             async function showLancarDiariasScreen() {
-                const { data, error } = await _supabase.from('colaboradores').select('id, nome_completo').order('nome_completo');
-                if (error) {
-                    console.error("Erro ao buscar colaboradores para diárias:", error);
-                    alert("Erro ao carregar colaboradores.");
+                // Garante que o cache de colaboradores está preenchido
+                if (colaboradoresCache.length === 0) {
+                    await fetchAndRenderColaboradores(true); // 'true' para apenas popular o cache
+                }
+
+                if (colaboradoresCache.length === 0) {
+                    alert("Não foi possível carregar a lista de colaboradores. Tente voltar e entrar na tela novamente.");
                     return;
                 }
+
+                // Popula o dropdown usando o cache que agora está completo
                 diariaColaboradorSelect.innerHTML = '<option value="">-- Selecione o Colaborador --</option>';
-                data.forEach(colab => {
+                colaboradoresCache.forEach(colab => {
                     diariaColaboradorSelect.innerHTML += `<option value="${colab.id}">${colab.nome_completo}</option>`;
                 });
 
-                // Resetar campos
-                diariaColaboradorSelect.value = '';
+                // Reseta os campos do formulário
+                lancarDiariaForm.reset();
+                diariaDataInput.valueAsDate = new Date();
                 diariaFuncaoInput.value = '';
                 diariaSetorInput.value = '';
-                diariaDataInput.valueAsDate = new Date();
                 diariaCamposDinamicos.style.display = 'none';
                 
                 showScreen('lancarDiarias');
