@@ -1052,7 +1052,7 @@
             const btnListarLoginsVoltar = document.getElementById('btnListarLoginsVoltar');
 
             // Alterar Senha
-            const currentPasswordInput = document.getElementById('currentPassword'); // CORRIGIDO AQUI!
+            const currentPasswordInput = document.getElementById('currentPassword'); 
             const newPasswordInput = document.getElementById('newPassword');
             const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
             const btnChangePassword = document.getElementById('btnChangePassword');
@@ -1440,15 +1440,15 @@
                 const diariaData = {
                     colaborador_id: colaboradorId,
                     data_diaria: dataDiaria,
-                    valor_pago: valorCalculado, // CORRIGIDO: usando 'valor_pago'
-                    funcao_colaborador: colaboradorSelecionado.funcao, // CORRIGIDO: usando 'funcao_colaborador'
-                    setor_colaborador: colaboradorSelecionado.setor, // CORRIGIDO: usando 'setor_colaborador'
+                    valor_pago: valorCalculado, 
+                    funcao_colaborador: colaboradorSelecionado.funcao, 
+                    setor_colaborador: colaboradorSelecionado.setor, 
                     user_id: user.id,
                     dobrou: diariaDobrouCheckbox.checked,
                     horario_entrada: diariaHoraEntradaInput.value || null,
                     horario_saida: diariaHoraSaidaInput.value || null,
                     horas_trabalhadas: horasTrabalhadas,
-                    lancado_por: user.email // Captura o email do usuário logado (assumindo que a coluna existe no DB)
+                    lancado_por: user.email 
                 };
 
                 const { data, error } = await _supabase.from('diarias_lancadas').insert([diariaData]).select().single();
@@ -1456,7 +1456,7 @@
                     console.error("Erro ao salvar diária:", error);
                     alert(`Erro ao salvar diária: ${error.message}`);
                 } else {
-                    await logAction('CREATED', data.id, user.email, `Diária de ${colaboradorSelecionado.nome_completo} (R$ ${data.valor_pago.toFixed(2)}) criada.`); // Usando valor_pago
+                    await logAction('CREATED', data.id, user.email, `Diária de ${colaboradorSelecionado.nome_completo} (R$ ${data.valor_pago.toFixed(2)}) criada.`); 
                     alert('Diária lançada com sucesso!');
                     // Limpa o formulário após o lançamento
                     diariaColaboradorSelect.value = '';
@@ -1505,7 +1505,7 @@
                     // Processa pagamentos
                     const nome = d.colaboradores ? d.colaboradores.nome_completo : 'Desconhecido';
                     const pix = d.colaboradores ? d.colaboradores.chave_pix : 'N/A';
-                    const valorDiaria = d.valor_pago || 0; // CORRIGIDO: usando 'valor_pago'
+                    const valorDiaria = d.valor_pago || 0; 
                     
                     if (!pagamentos[nome]) {
                         pagamentos[nome] = { valor: 0, pix: pix };
@@ -1513,7 +1513,7 @@
                     pagamentos[nome].valor += valorDiaria;
 
                     // Processa gastos por setor
-                    const setor = d.setor_colaborador || 'Não Informado'; // CORRIGIDO: usando 'setor_colaborador'
+                    const setor = d.setor_colaborador || 'Não Informado'; 
                     if (!gastosPorSetor[setor]) {
                         gastosPorSetor[setor] = 0;
                     }
@@ -1542,7 +1542,7 @@
                 // Preenche tabela de gastos
                 resumoGastosBody.innerHTML = '';
                 Object.entries(dados.gastosPorSetor).sort((a, b) => a[0].localeCompare(b[0])).forEach(([setor, valor]) => {
-                    const row = resumoGastosBody.insertRow(); // Mudei para insertRow, estava insertCell
+                    const row = resumoGastosBody.insertRow(); 
                     row.innerHTML = `
                         <td>${setor}</td>
                         <td class="text-right">${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
@@ -1569,9 +1569,9 @@
                     ...diarias.map(d => [
                         new Date(d.data_diaria + 'T00:00:00').toLocaleDateString('pt-BR'),
                         d.colaboradores ? d.colaboradores.nome_completo : 'Desconhecido',
-                        d.funcao_colaborador, // CORRIGIDO
-                        d.setor_colaborador, // CORRIGIDO
-                        d.valor_pago, // CORRIGIDO
+                        d.funcao_colaborador, 
+                        d.setor_colaborador, 
+                        d.valor_pago, 
                         d.dobrou ? 'Sim' : 'Não',
                         d.horario_entrada || '',
                         d.horario_saida || '',
@@ -1699,7 +1699,10 @@
                     row.innerHTML = `
                         <td>${d.colaboradores ? d.colaboradores.nome_completo : 'Desconhecido'}</td>
                         <td>${new Date(d.data_diaria + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                        <td>${d.funcao_colaborador}</td> <td>${d.setor_colaborador}</td> <td>${(d.valor_pago || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td> <td>${d.lancado_por || 'N/A'}</td>
+                        <td>${d.funcao_colaborador}</td> 
+                        <td>${d.setor_colaborador}</td> 
+                        <td>${(d.valor_pago || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td> 
+                        <td>${d.lancado_por || 'N/A'}</td>
                         <td>
                             <button class="btn-secondary edit-diaria-btn" data-id="${d.id}">Editar</button>
                             <button class="btn-danger delete-diaria-btn" data-id="${d.id}" style="background-color: var(--color-danger); margin-left: 5px;">Excluir</button>
@@ -1730,9 +1733,9 @@
                 editDiariaIdInput.value = data.id;
                 editDiariaColaboradorNomeInput.value = data.colaboradores.nome_completo;
                 editDiariaDataInput.value = data.data_diaria;
-                editDiariaFuncaoSelect.value = data.funcao_colaborador; // CORRIGIDO
-                editDiariaSetorSelect.value = data.setor_colaborador; // CORRIGIDO
-                editDiariaValorInput.value = (data.valor_pago || 0).toFixed(2); // CORRIGIDO
+                editDiariaFuncaoSelect.value = data.funcao_colaborador; 
+                editDiariaSetorSelect.value = data.setor_colaborador; 
+                editDiariaValorInput.value = (data.valor_pago || 0).toFixed(2); 
                 editDiariaDobrouCheckbox.checked = data.dobrou;
                 editDiariaHoraEntradaInput.value = data.horario_entrada || '';
                 editDiariaHoraSaidaInput.value = data.horario_saida || '';
@@ -1751,29 +1754,29 @@
                 
                 const updatedData = {
                     data_diaria: editDiariaDataInput.value,
-                    funcao_colaborador: editDiariaFuncaoSelect.value, // CORRIGIDO
-                    setor_colaborador: editDiariaSetorSelect.value, // CORRIGIDO
-                    valor_pago: valorCalculado, // CORRIGIDO
+                    funcao_colaborador: editDiariaFuncaoSelect.value, 
+                    setor_colaborador: editDiariaSetorSelect.value, 
+                    valor_pago: valorCalculado, 
                     dobrou: editDiariaDobrouCheckbox.checked,
                     horario_entrada: editDiariaHoraEntradaInput.value || null,
                     horario_saida: editDiariaHoraSaidaInput.value || null,
-                    horas_trabalhadas: horasTrabalhadas // Nome da variável estava errada antes
+                    horas_trabalhadas: horasTrabalhadas 
                 };
 
-                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('valor_pago, colaboradores(nome_completo)').eq('id', diariaId).single(); // CORRIGIDO
+                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('valor_pago, colaboradores(nome_completo), funcao_colaborador').eq('id', diariaId).single(); 
                 if (fetchError) {
-                    alert("Erro ao buscar dados antigos da diária para log.");
-                    console.error(fetchError);
+                    alert("Erro ao buscar dados antigos da diária para log. A atualização será impedida para evitar logs incorretos.");
+                    console.error("Erro ao buscar oldDiaria para log:", fetchError);
                     return;
                 }
 
-                const { data, error } = await _supabase.from('diarias_lancadas').update(updatedData).eq('id', diariaId).select().single();
-                if (error) {
-                    alert("Erro ao salvar alterações.");
-                    console.error(error);
+                const { data: updateData, error: updateError } = await _supabase.from('diarias_lancadas').update(updatedData).eq('id', diariaId).select().single();
+                if (updateError) {
+                    alert("Erro ao salvar alterações: " + updateError.message); // Mostra o erro real do Supabase
+                    console.error("Erro ao salvar alterações:", updateError);
                 } else {
                     const { data: { user } } = await _supabase.auth.getUser();
-                    await logAction('UPDATED', diariaId, user.email, `Diária de ${oldDiaria.colaboradores.nome_completo} (R$ ${oldDiaria.valor_pago.toFixed(2)}) atualizada para R$ ${data.valor_pago.toFixed(2)}.`); // CORRIGIDO
+                    await logAction('UPDATED', diariaId, user.email, `Diária de ${oldDiaria.colaboradores.nome_completo} (Função: ${oldDiaria.funcao_colaborador}, Valor anterior: R$ ${oldDiaria.valor_pago.toFixed(2)}) atualizada para R$ ${updateData.valor_pago.toFixed(2)}.`); 
                     alert("Diária atualizada com sucesso!");
                     editDiariaModal.classList.remove('active');
                     showGerenciarDiariasScreen();
@@ -1786,20 +1789,23 @@
                     return;
                 }
 
-                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('valor_pago, colaboradores(nome_completo)').eq('id', diariaId).single(); // CORRIGIDO
+                // Fetch oldDiaria BEFORE deleting it, so we can log its details.
+                const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('valor_pago, colaboradores(nome_completo), funcao_colaborador').eq('id', diariaId).single();
                 if (fetchError) {
-                    alert("Erro ao buscar dados da diária para log.");
-                    console.error(fetchError);
+                    alert("Erro ao buscar dados da diária para log. A exclusão será impedida para evitar logs incorretos.");
+                    console.error("Erro ao buscar oldDiaria para log:", fetchError);
                     return;
                 }
 
-                const { error } = await _supabase.from('diarias_lancadas').delete().eq('id', diariaId);
-                if (error) {
-                    alert("Erro ao excluir diária.");
-                    console.error(error);
+                const { error: deleteError } = await _supabase.from('diarias_lancadas').delete().eq('id', diariaId);
+                if (deleteError) {
+                    alert("Erro ao excluir diária: " + deleteError.message); // Mostra o erro real do Supabase
+                    console.error("Erro ao excluir diária:", deleteError);
+                    // Não logAction aqui, pois a exclusão principal falhou.
                 } else {
                     const { data: { user } } = await _supabase.auth.getUser();
-                    await logAction('DELETED', diariaId, user.email, `Diária de ${oldDiaria.colaboradores.nome_completo} (R$ ${oldDiaria.valor_pago.toFixed(2)}) foi excluída.`); // CORRIGIDO
+                    // Log com diaria_id = null porque a diária original não existe mais
+                    await logAction('DELETED', null, user.email, `Diária de ${oldDiaria.colaboradores.nome_completo} (Função: ${oldDiaria.funcao_colaborador}, Valor: R$ ${oldDiaria.valor_pago.toFixed(2)}) foi excluída.`);
                     alert("Diária excluída com sucesso!");
                     showGerenciarDiariasScreen();
                 }
@@ -1807,9 +1813,9 @@
 
             // --- FUNÇÕES DE LOG (HISTÓRICO) ---
             async function logAction(action, diaria_id, user_email, details) {
-                const { error } = await _supabase.from('historico_diarias').insert([{
+                const { error } = await _supabase.from('diaria_historico').insert([{ // CORRIGIDO: Nome da tabela para 'diaria_historico'
                     action: action,
-                    diaria_id: diaria_id,
+                    diaria_id: diaria_id, // Este pode ser null agora
                     user_email: user_email,
                     details: details
                 }]);
@@ -1821,8 +1827,9 @@
             async function showHistoricoScreen() {
                 historicoTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>';
                 showScreen('historico');
-                const { data, error } = await _supabase.from('historico_diarias')
-                    .select('*')
+                // Adicionado JOIN para trazer detalhes de colaboradores caso o ID exista
+                const { data, error } = await _supabase.from('diaria_historico')
+                    .select('*, diarias_lancadas(colaboradores(nome_completo))') // Puxa nome do colaborador da diária, se existir
                     .order('created_at', { ascending: false })
                     .limit(100);
 
@@ -1859,15 +1866,12 @@
                     regras_pagamento = [];
                 } else {
                     regras_pagamento = data;
-                    // Preenche os selects de função com base nas regras (colaborador e edição de diária)
                     populateFuncaoSelects();
                 }
             }
             
             function populateFuncaoSelects() {
                 const funcoes = [...new Set(regras_pagamento.map(r => r.funcao))].sort();
-                // O select de diariaColaborador não deve ser populado com funções, mas com colaboradores.
-                // Ajustamos a lógica para popular apenas colabFuncaoSelect e editDiariaFuncaoSelect aqui.
                 const selects = [colabFuncaoSelect, editDiariaFuncaoSelect]; 
                 
                 selects.forEach(select => {
@@ -1877,7 +1881,6 @@
                     funcoes.forEach(funcao => {
                         select.innerHTML += `<option value="${funcao}">${funcao}</option>`;
                     });
-                    // Restaura o valor se ele ainda for uma opção válida
                     if (Array.from(select.options).some(option => option.value === currentValue)) {
                         select.value = currentValue;
                     }
@@ -1887,7 +1890,7 @@
             async function showGerenciarRegrasScreen() {
                 regrasPagamentoList.innerHTML = '<p style="text-align: center;">Carregando regras...</p>';
                 showScreen('gerenciarRegras');
-                await fetchRegrasPagamento(); // Garante que as regras estão atualizadas
+                await fetchRegrasPagamento(); 
                 renderRegrasPagamento();
             }
 
@@ -1938,7 +1941,6 @@
                         </div>
                     `;
                     regrasPagamentoList.appendChild(regraDiv);
-                    // Garante a visibilidade inicial correta dos campos para cada tipo de cálculo
                     toggleRegraFieldsVisibility(regra.id, regra.tipo_calculo);
                 });
 
@@ -1949,7 +1951,6 @@
                     button.addEventListener('click', handleDeleteRegra);
                 });
 
-                // Ações para mostrar/esconder campos com base no tipo de cálculo (para inputs manuais)
                 regrasPagamentoList.querySelectorAll('[data-field="tipo_calculo"]').forEach(select => {
                     select.addEventListener('change', (e) => {
                         const id = e.target.dataset.id;
@@ -1959,12 +1960,10 @@
                 });
             }
 
-            // Função para alternar visibilidade dos campos da regra
             function toggleRegraFieldsVisibility(id, type) {
                 const isFixed = type === 'Fixo';
                 const isHourlyOrDoubled = type === 'Fixo com Dobra';
 
-                // Esconde todos os grupos primeiro
                 const groupsToToggle = [
                     `valorBaseGroup-${id}`, `horasBaseGroup-${id}`, `valorHoraExtraGroup-${id}`,
                     `valorDobraSemanaGroup-${id}`, `valorDobraFDSGroup-${id}`
@@ -1974,7 +1973,6 @@
                     if (el) el.classList.add('hidden');
                 });
 
-                // Mostra os grupos relevantes
                 if (isFixed || isHourlyOrDoubled) { 
                     const el = document.getElementById(`valorBaseGroup-${id}`);
                     if (el) el.classList.remove('hidden');
@@ -1991,7 +1989,6 @@
                     if(valorDobraFDSEl) valorDobraFDSEl.classList.remove('hidden');
                 }
 
-                // Limpa valores dos campos ocultos para evitar dados inconsistentes no banco
                 const currentRegraDiv = document.querySelector(`.regra-item[data-id="${id}"]`);
                 if (!currentRegraDiv) return;
 
@@ -2034,7 +2031,7 @@
                     console.error("Erro ao adicionar regra:", error);
                 } else {
                     alert(`Regra para "${novaFuncao}" adicionada com sucesso!`);
-                    showGerenciarRegrasScreen(); // Recarrega a lista
+                    showGerenciarRegrasScreen(); 
                 }
             }
 
@@ -2063,7 +2060,7 @@
                     console.error("Erro na atualização da regra:", error);
                 } else {
                     alert('Regra de pagamento atualizada com sucesso!');
-                    showGerenciarRegrasScreen(); // Recarrega a lista de regras
+                    showGerenciarRegrasScreen(); 
                 }
             }
 
@@ -2078,7 +2075,7 @@
                     console.error("Erro ao excluir regra:", error);
                 } else {
                     alert('Regra de pagamento excluída com sucesso!');
-                    showGerenciarRegrasScreen(); // Recarrega a lista de regras
+                    showGerenciarRegrasScreen(); 
                 }
             }
 
@@ -2274,8 +2271,8 @@
                 if(btnLancarDiariasVoltar) btnLancarDiariasVoltar.addEventListener('click', () => showScreen('dashboard')); 
                 diariaColaboradorSelect.addEventListener('change', () => toggleDiariaFields(false));
                 diariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(false));
-                diariaHoraEntradaInput.addEventListener('change', () => toggleDiariaFields(false)); // Atualiza ao mudar hora
-                diariaHoraSaidaInput.addEventListener('change', () => toggleDiariaFields(false)); // Atualiza ao mudar hora
+                diariaHoraEntradaInput.addEventListener('change', () => toggleDiariaFields(false)); 
+                diariaHoraSaidaInput.addEventListener('change', () => toggleDiariaFields(false)); 
                 if(btnSalvarDiaria) btnSalvarDiaria.addEventListener('click', handleSalvarDiaria);
                 
                 // Relatórios
