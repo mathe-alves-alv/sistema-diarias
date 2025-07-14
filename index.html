@@ -1052,7 +1052,7 @@
             const btnListarLoginsVoltar = document.getElementById('btnListarLoginsVoltar');
 
             // Alterar Senha
-            const currentPasswordInput = document.getElementById('document.getElementById('currentPassword');
+            const currentPasswordInput = document.getElementById('currentPassword'); // CORRIGIDO AQUI!
             const newPasswordInput = document.getElementById('newPassword');
             const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
             const btnChangePassword = document.getElementById('btnChangePassword');
@@ -1542,7 +1542,7 @@
                 // Preenche tabela de gastos
                 resumoGastosBody.innerHTML = '';
                 Object.entries(dados.gastosPorSetor).sort((a, b) => a[0].localeCompare(b[0])).forEach(([setor, valor]) => {
-                    const row = resumoGastosBody.insertCell();
+                    const row = resumoGastosBody.insertRow(); // Mudei para insertRow, estava insertCell
                     row.innerHTML = `
                         <td>${setor}</td>
                         <td class="text-right">${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
@@ -1712,7 +1712,8 @@
 
             async function handleEditDiaria(event) {
                 const diariaId = event.target.dataset.id;
-                const { data, error } = await _supabase.from('diarias_lancadas').select(`*, colaboradores(nome_completo)`).eq('id', diariaId).single();
+                const { data, error } = await _supabase.from('diarias_lancadas').select(`*, colaboradores(nome_completo)`)
+                    .eq('id', diariaId).single();
                 if (error) {
                     alert("Erro ao carregar dados da diária.");
                     console.error(error);
@@ -1756,7 +1757,7 @@
                     dobrou: editDiariaDobrouCheckbox.checked,
                     horario_entrada: editDiariaHoraEntradaInput.value || null,
                     horario_saida: editDiariaHoraSaidaInput.value || null,
-                    horas_trabalhadas: hoursTrabalhadas
+                    horas_trabalhadas: horasTrabalhadas // Nome da variável estava errada antes
                 };
 
                 const { data: oldDiaria, error: fetchError } = await _supabase.from('diarias_lancadas').select('valor_pago, colaboradores(nome_completo)').eq('id', diariaId).single(); // CORRIGIDO
