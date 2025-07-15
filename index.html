@@ -928,8 +928,7 @@
             const screenListarColaboradores = document.getElementById('screenListarColaboradores');
             const screenLancarDiarias = document.getElementById('screenLancarDiarias');
             const screenRelatorios = document.getElementById('screenRelatorios');
-            const screenCriarLogin = document.getElementById('screenCriarLogin'); // MANTIDO: Embora a tela de listar logins seja removida, criar login é uma funcionalidade separada
-            // const screenListarLogins = document.getElementById('screenListarLogins'); // REMOVIDO
+            const screenCriarLogin = document.getElementById('screenCriarLogin'); 
             const screenAlterarSenha = document.getElementById('screenAlterarSenha');
             const screenGerenciarDiarias = document.getElementById('screenGerenciarDiarias');
             const screenHistorico = document.getElementById('screenHistorico');
@@ -950,7 +949,7 @@
             const btnGoToListarColaboradores = document.getElementById('btnGoToListarColaboradores');
             const btnGoToRelatorios = document.getElementById('btnGoToRelatorios');
             const btnGoToCriarLogin = document.getElementById('btnGoToCriarLogin');
-            // const btnGoToListarLogins = document.getElementById('btnGoToListarLogins'); // REMOVIDO
+            // REMOVIDO: const btnGoToListarLogins = document.getElementById('btnGoToListarLogins'); 
             const btnGoToAlterarSenha = document.getElementById('btnGoToAlterarSenha');
             const btnGoToGerenciarDiarias = document.getElementById('btnGoToGerenciarDiarias');
             const btnGoToHistorico = document.getElementById('btnGoToHistorico');
@@ -1007,11 +1006,6 @@
             const btnCreateUser = document.getElementById('btnCreateUser');
             const createUserErrorMessage = document.getElementById('createUserErrorMessage');
             const btnCriarLoginVoltar = document.getElementById('btnCriarLoginVoltar');
-
-            // Listar Logins (REMOVIDOS os seletores, pois a tela e funcionalidade foram removidas)
-            // const usersTableBody = document.getElementById('usersTableBody');
-            // const listarLoginsMessage = document.getElementById('listarLoginsMessage');
-            // const btnListarLoginsVoltar = document.getElementById('btnListarLoginsVoltar');
 
             // Alterar Senha
             const currentPasswordInput = document.getElementById('currentPassword'); 
@@ -1099,8 +1093,9 @@
                 const isAdmin = user.id === ADMIN_USER_ID;
 
                 // Esconde/mostra botões de admin (Botões de Login/Acesso já foram removidos do HTML)
-                btnGoToCriarLogin.style.display = isAdmin ? 'flex' : 'none'; // Este botão ainda existe no HTML, mas agora oculta se não for admin
-                btnGoToGerenciarRegras.style.display = isAdmin ? 'flex' : 'none';
+                // O botão btnGoToCriarLogin ainda existe no HTML, mas agora oculta se não for admin
+                if (btnGoToCriarLogin) btnGoToCriarLogin.style.display = isAdmin ? 'flex' : 'none'; 
+                if (btnGoToGerenciarRegras) btnGoToGerenciarRegras.style.display = isAdmin ? 'flex' : 'none';
 
                 // Carrega dados essenciais
                 await fetchRegrasPagamento();
