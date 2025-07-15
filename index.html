@@ -1634,10 +1634,11 @@
 
                 const { data: { users }, error } = await _supabase.auth.admin.listUsers();
                 if (error) {
-                    console.error("Erro ao listar usuários:", error);
-                    listarLoginsMessage.textContent = `Erro: ${error.message}`;
+                    // Mensagem de erro mais clara sobre a permissão
+                    listarLoginsMessage.textContent = `Erro ao listar usuários: ${error.message}. Esta operação requer permissões de administrador (Service Role Key) e deve ser executada em um ambiente de backend, como uma Supabase Edge Function, não diretamente do navegador por questões de segurança.`;
                     listarLoginsMessage.style.display = 'block';
                     usersTableBody.innerHTML = '';
+                    console.error("Erro ao listar usuários (requer Service Role Key):", error);
                     return;
                 }
                 usersTableBody.innerHTML = '';
@@ -1826,7 +1827,6 @@
             async function showHistoricoScreen() {
                 historicoTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>';
                 showScreen('historico');
-                // CORRIGIDO: Removida a junção complexa. O campo 'details' já contém a informação necessária.
                 const { data, error } = await _supabase.from('diaria_historico')
                     .select('*') 
                     .order('created_at', { ascending: false })
@@ -1834,8 +1834,7 @@
 
                 if (error) {
                     console.error("Erro ao buscar histórico:", error);
-                    // Mensagem de erro mais detalhada para o usuário
-                    historicoTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 20px;">Erro ao carregar histórico: ${error.message || 'Erro desconhecido. Verifique as políticas de RLS.'}</td></tr>`;
+                    historicoTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 20px;">Erro ao carregar histórico: ${error.message || 'Erro desconhecido. Verifique as políticas de RLS ou a existência da coluna created_at.'}</td></tr>`;
                     return;
                 }
                 renderHistoricoTable(data);
