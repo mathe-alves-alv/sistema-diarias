@@ -155,7 +155,7 @@
         .form-group { margin-bottom: var(--spacing-unit); }
         
         /* Mensagens de Erro */
-        #loginErrorMessage, #createUserErrorMessage, #changePasswordErrorMessage, #listarLoginsMessage { 
+        #loginErrorMessage, #createUserErrorMessage, #changePasswordErrorMessage { 
             color: var(--color-danger); 
             margin-top: var(--spacing-unit); 
             text-align: center; 
@@ -555,6 +555,7 @@
                             </svg>
                             <span>Criar Acesso</span>
                         </button>
+                        
                         <button id="btnGoToAlterarSenha" class="admin-button">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key-round">
                                 <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h3v-3h3V9h3V6c0-.6-.4-1-1-1H9c-.6 0-1 .4-1 1v3H5v3H2Z"/>
@@ -1164,15 +1165,16 @@
                 btnSalvarColaborador.classList.remove('btn-success');
                 btnSalvarColaborador.classList.add('btn-primary');
 
-                colabNomeInput.value = data.nome_completo;
-                colabFuncaoSelect.value = data.funcao;
-                colabSetorSelect.value = data.setor;
-                colabPixInput.value = data.chave_pix;
-                colabCpfInput.value = formatCpf(data.cpf);
-                colabTelefoneInput.value = formatTelefone(data.telefone);
-                colabEnderecoInput.value = data.endereco;
-                colabDataNascimentoInput.value = data.data_nascimento;
-                colabNomeMaeInput.value = data.nome_mae;
+                // Garante que os elementos existem antes de tentar definir o valor
+                if (colabNomeInput) colabNomeInput.value = data.nome_completo;
+                if (colabFuncaoSelect) colabFuncaoSelect.value = data.funcao;
+                if (colabSetorSelect) colabSetorSelect.value = data.setor;
+                if (colabPixInput) colabPixInput.value = data.chave_pix;
+                if (colabCpfInput) colabCpfInput.value = formatCpf(data.cpf);
+                if (colabTelefoneInput) colabTelefoneInput.value = formatTelefone(data.telefone);
+                if (colabEnderecoInput) colabEnderecoInput.value = data.endereco;
+                if (colabDataNascimentoInput) colabDataNascimentoInput.value = data.data_nascimento;
+                if (colabNomeMaeInput) colabNomeMaeInput.value = data.nome_mae;
 
                 showScreen('adicionarColaborador');
             }
@@ -1579,8 +1581,6 @@
                 createUserErrorMessage.style.display = 'block';
                 console.error("Tentativa de criar usuário admin diretamente do frontend - BLOQUEADO POR SEGURANÇA.");
             }
-
-            // REMOVIDA a função showListarLoginsScreen, conforme solicitado
 
             async function handleChangePassword() {
                 const newPassword = newPasswordInput.value;
@@ -2037,12 +2037,17 @@
             }
 
             // Aplicar máscaras nos inputs de colaborador
-            colabCpfInput.addEventListener('input', (e) => {
-                e.target.value = formatCpf(e.target.value);
-            });
-            colabTelefoneInput.addEventListener('input', (e) => {
-                e.target.value = formatTelefone(e.target.value);
-            });
+            // Verificando se os elementos existem antes de adicionar o listener
+            if (colabCpfInput) {
+                colabCpfInput.addEventListener('input', (e) => {
+                    e.target.value = formatCpf(e.target.value);
+                });
+            }
+            if (colabTelefoneInput) {
+                colabTelefoneInput.addEventListener('input', (e) => {
+                    e.target.value = formatTelefone(e.target.value);
+                });
+            }
 
             // --- Relatório de Colaboradores ---
             async function showRelatorioColaboradoresScreen() {
@@ -2212,21 +2217,27 @@
                     await fetchAndRenderColaboradores();
                     showScreen('listarColaboradores');
                 });
+                // Note: colabNomeInput and other inputs for screenAdicionarColaborador are defined globally
+                // so they are available when btnGoToAdicionarColaborador's click listener fires.
                 if(btnGoToAdicionarColaborador) btnGoToAdicionarColaborador.addEventListener('click', () => {
-                    colabNomeInput.value = ''; 
-                    colabFuncaoSelect.value = ''; 
-                    colabSetorSelect.value = ''; 
-                    colabPixInput.value = ''; 
-                    colabCpfInput.value = ''; 
-                    colabTelefoneInput.value = ''; 
-                    colabEnderecoInput.value = '';
-                    colabDataNascimentoInput.value = '';
-                    colabNomeMaeInput.value = '';
+                    // Limpa os campos do formulário Adicionar/Editar Colaborador
+                    if (colabNomeInput) colabNomeInput.value = ''; 
+                    if (colabFuncaoSelect) colabFuncaoSelect.value = ''; 
+                    if (colabSetorSelect) colabSetorSelect.value = ''; 
+                    if (colabPixInput) colabPixInput.value = ''; 
+                    if (colabCpfInput) colabCpfInput.value = ''; 
+                    if (colabTelefoneInput) colabTelefoneInput.value = ''; 
+                    if (colabEnderecoInput) colabEnderecoInput.value = '';
+                    if (colabDataNascimentoInput) colabDataNascimentoInput.value = '';
+                    if (colabNomeMaeInput) colabNomeMaeInput.value = '';
+
                     editingColaboradorId = null; 
-                    colaboradorFormTitle.textContent = 'Adicionar Novo Colaborador';
-                    btnSalvarColaborador.textContent = 'Salvar Novo Colaborador';
-                    btnSalvarColaborador.classList.remove('btn-primary'); 
-                    btnSalvarColaborador.classList.add('btn-success');
+                    if (colaboradorFormTitle) colaboradorFormTitle.textContent = 'Adicionar Novo Colaborador';
+                    if (btnSalvarColaborador) {
+                        btnSalvarColaborador.textContent = 'Salvar Novo Colaborador';
+                        btnSalvarColaborador.classList.remove('btn-primary'); 
+                        btnSalvarColaborador.classList.add('btn-success');
+                    }
                     showScreen('adicionarColaborador');
                 });
                 if(btnAdicionarColabVoltar) btnAdicionarColabVoltar.addEventListener('click', () => showScreen('listarColaboradores')); 
@@ -2236,10 +2247,10 @@
                 // Lançamento de Diárias
                 if(btnGoToLancarDiaria) btnGoToLancarDiaria.addEventListener('click', showLancarDiariasScreen);
                 if(btnLancarDiariasVoltar) btnLancarDiariasVoltar.addEventListener('click', () => showScreen('dashboard')); 
-                diariaColaboradorSelect.addEventListener('change', () => toggleDiariaFields(false));
-                diariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(false));
-                diariaHoraEntradaInput.addEventListener('change', () => toggleDiariaFields(false)); 
-                diariaHoraSaidaInput.addEventListener('change', () => toggleDiariaFields(false)); 
+                if(diariaColaboradorSelect) diariaColaboradorSelect.addEventListener('change', () => toggleDiariaFields(false));
+                if(diariaDobrouCheckbox) diariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(false));
+                if(diariaHoraEntradaInput) diariaHoraEntradaInput.addEventListener('change', () => toggleDiariaFields(false)); 
+                if(diariaHoraSaidaInput) diariaHoraSaidaInput.addEventListener('change', () => toggleDiariaFields(false)); 
                 if(btnSalvarDiaria) btnSalvarDiaria.addEventListener('click', handleSalvarDiaria);
                 
                 // Relatórios
@@ -2268,28 +2279,28 @@
 
                 // Criação de Login (botão no Dashboard)
                 if(btnGoToCriarLogin) btnGoToCriarLogin.addEventListener('click', () => {
-                    createUserEmailInput.value = '';
-                    generatedPasswordDisplay.value = ''; 
-                    createUserErrorMessage.style.display = 'none';
+                    if (createUserEmailInput) createUserEmailInput.value = '';
+                    if (generatedPasswordDisplay) generatedPasswordDisplay.value = ''; 
+                    if (createUserErrorMessage) createUserErrorMessage.style.display = 'none';
                     showScreen('criarLogin');
                 });
                 if(btnCriarLoginVoltar) btnCriarLoginVoltar.addEventListener('click', () => showScreen('dashboard'));
                 if(btnCreateUser) btnCreateUser.addEventListener('click', handleCreateUser);
-                createUserEmailInput.addEventListener('keypress', (e) => { 
+                if(createUserEmailInput) createUserEmailInput.addEventListener('keypress', (e) => { 
                     if (e.key === 'Enter') handleCreateUser(); 
                 });
                 
                 // Alterar Senha
                 if(btnGoToAlterarSenha) btnGoToAlterarSenha.addEventListener('click', () => {
-                    currentPasswordInput.value = '';
-                    newPasswordInput.value = '';
-                    confirmNewPasswordInput.value = '';
-                    changePasswordErrorMessage.style.display = 'none';
+                    if (currentPasswordInput) currentPasswordInput.value = '';
+                    if (newPasswordInput) newPasswordInput.value = '';
+                    if (confirmNewPasswordInput) confirmNewPasswordInput.value = '';
+                    if (changePasswordErrorMessage) changePasswordErrorMessage.style.display = 'none';
                     showScreen('alterarSenha');
                 });
                 if(btnAlterarSenhaVoltar) btnAlterarSenhaVoltar.addEventListener('click', () => showScreen('dashboard'));
                 if(btnChangePassword) btnChangePassword.addEventListener('click', handleChangePassword);
-                confirmNewPasswordInput.addEventListener('keypress', (e) => {
+                if(confirmNewPasswordInput) confirmNewPasswordInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') handleChangePassword();
                 });
 
@@ -2304,10 +2315,10 @@
                         editDiariaModal.classList.remove('active');
                     }
                 });
-                editDiariaFuncaoSelect.addEventListener('change', () => toggleDiariaFields(true));
-                editDiariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(true));
-                editDiariaHoraEntradaInput.addEventListener('change', () => toggleDiariaFields(true));
-                editDiariaHoraSaidaInput.addEventListener('change', () => toggleDiariaFields(true));
+                if(editDiariaFuncaoSelect) editDiariaFuncaoSelect.addEventListener('change', () => toggleDiariaFields(true));
+                if(editDiariaDobrouCheckbox) editDiariaDobrouCheckbox.addEventListener('change', () => toggleDiariaFields(true));
+                if(editDiariaHoraEntradaInput) editDiariaHoraEntradaInput.addEventListener('change', () => toggleDiariaFields(true)); 
+                if(editDiariaHoraSaidaInput) editDiariaHoraSaidaInput.addEventListener('change', () => toggleDiariaFields(true));
 
                 // Histórico
                 if(btnGoToHistorico) btnGoToHistorico.addEventListener('click', showHistoricoScreen);
@@ -2322,7 +2333,7 @@
                 if(btnGoToRelatorioColaboradores) btnGoToRelatorioColaboradores.addEventListener('click', showRelatorioColaboradoresScreen);
                 if(btnRelatorioColaboradoresVoltar) btnRelatorioColaboradoresVoltar.addEventListener('click', () => showScreen('dashboard'));
                 if(btnGerarRelatorioColaboradoresPdf) btnGerarRelatorioColaboradoresPdf.addEventListener('click', gerarRelatorioColaboradoresPdf);
-                if(btnGerarRelatorioColaboradoresXlsx) btnGerarRelatorioColaboradoresXlsx.addEventListener('click', gerarRelatorioColaboradoresXlsx); // NOVO LISTENER
+                if(btnGerarRelatorioColaboradoresXlsx) btnGerarRelatorioColaboradoresXlsx.addEventListener('click', gerarRelatorioColaboradoresXlsx); 
                 
                 // Inicialização da sessão
                 const { data: { session } } = await _supabase.auth.getSession();
