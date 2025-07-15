@@ -594,7 +594,7 @@
 
                         <button id="btnGoToGerenciarRegras" class="admin-button">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings">
-                                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.78 1.35a2 2 0 0 0 .73 2.73l.04.02a2 2 0 0 1 .97 2.18v.44a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 0-.73 2.73l.78 1.35a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.78-1.35a2 2 0 0 0-.73-2.73l-.04-.02a2 2 0 0 1-.97-2.18v-.44a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 0 .73-2.73l-.78-1.35a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.78 1.35a2 2 0 0 0 .73 2.73l.04.02a2 2 0 0 1 .97 2.18v.44a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 0-.73 2.73l.78 1.35a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 |0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.78-1.35a2 2 0 0 0-.73-2.73l-.04-.02a2 2 0 0 1-.97-2.18v-.44a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 0 .73-2.73l-.78-1.35a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
                                 <circle cx="12" cy="12" r="3"/>
                             </svg>
                             <span>Regras de Diária</span>
@@ -1772,7 +1772,7 @@
 
                 const { data: updateData, error: updateError } = await _supabase.from('diarias_lancadas').update(updatedData).eq('id', diariaId).select().single();
                 if (updateError) {
-                    alert("Erro ao salvar alterações: " + updateError.message); // Mostra o erro real do Supabase
+                    alert("Erro ao salvar alterações: " + updateError.message); 
                     console.error("Erro ao salvar alterações:", updateError);
                 } else {
                     const { data: { user } } = await _supabase.auth.getUser();
@@ -1799,9 +1799,8 @@
 
                 const { error: deleteError } = await _supabase.from('diarias_lancadas').delete().eq('id', diariaId);
                 if (deleteError) {
-                    alert("Erro ao excluir diária: " + deleteError.message); // Mostra o erro real do Supabase
+                    alert("Erro ao excluir diária: " + deleteError.message); 
                     console.error("Erro ao excluir diária:", deleteError);
-                    // Não logAction aqui, pois a exclusão principal falhou.
                 } else {
                     const { data: { user } } = await _supabase.auth.getUser();
                     // Log com diaria_id = null porque a diária original não existe mais
@@ -1813,9 +1812,9 @@
 
             // --- FUNÇÕES DE LOG (HISTÓRICO) ---
             async function logAction(action, diaria_id, user_email, details) {
-                const { error } = await _supabase.from('diaria_historico').insert([{ // CORRIGIDO: Nome da tabela para 'diaria_historico'
+                const { error } = await _supabase.from('diaria_historico').insert([{ 
                     action: action,
-                    diaria_id: diaria_id, // Este pode ser null agora
+                    diaria_id: diaria_id, 
                     user_email: user_email,
                     details: details
                 }]);
@@ -1827,15 +1826,16 @@
             async function showHistoricoScreen() {
                 historicoTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Carregando histórico...</td></tr>';
                 showScreen('historico');
-                // Adicionado JOIN para trazer detalhes de colaboradores caso o ID exista
+                // CORRIGIDO: Removida a junção complexa. O campo 'details' já contém a informação necessária.
                 const { data, error } = await _supabase.from('diaria_historico')
-                    .select('*, diarias_lancadas(colaboradores(nome_completo))') // Puxa nome do colaborador da diária, se existir
+                    .select('*') 
                     .order('created_at', { ascending: false })
                     .limit(100);
 
                 if (error) {
                     console.error("Erro ao buscar histórico:", error);
-                    historicoTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Erro ao carregar.</td></tr>';
+                    // Mensagem de erro mais detalhada para o usuário
+                    historicoTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 20px;">Erro ao carregar histórico: ${error.message || 'Erro desconhecido. Verifique as políticas de RLS.'}</td></tr>`;
                     return;
                 }
                 renderHistoricoTable(data);
@@ -1852,8 +1852,7 @@
                     row.innerHTML = `
                         <td>${new Date(h.created_at).toLocaleString('pt-BR')}</td>
                         <td>${h.user_email}</td>
-                        <td>${h.details}</td>
-                    `;
+                        <td>${h.details}</td> `;
                 });
             }
 
