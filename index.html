@@ -546,7 +546,7 @@
                             </svg>
                             <span>Relatórios</span>
                         </button>
-                        <button id="btnGoToCriarLogin" class="admin-button">
+                        <button id="btnGoToCriarLogin" class="admin-button" style="display: none;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus">
                                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
                                 <circle cx="9" cy="7" r="4"/>
@@ -555,16 +555,6 @@
                             </svg>
                             <span>Criar Acesso</span>
                         </button>
-                        <button id="btnGoToListarLogins" class="admin-button">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users-2">
-                                <path d="M14 19a6 6 0 0 0-12 0"/>
-                                <circle cx="8" cy="9" r="4"/>
-                                <path d="M22 19a6 6 0 0 0-12 0"/>
-                                <circle cx="16" cy="9" r="4"/>
-                            </svg>
-                            <span>Listar Logins</span>
-                        </button>
-                        
                         <button id="btnGoToAlterarSenha" class="admin-button">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key-round">
                                 <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h3v-3h3V9h3V6c0-.6-.4-1-1-1H9c-.6 0-1 .4-1 1v3H5v3H2Z"/>
@@ -763,37 +753,6 @@
             </div>
         </div>
 
-        <div id="screenCriarLogin" class="screen">
-            <button id="btnCriarLoginVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
-            <div class="card">
-                <h2>Criar Novo Acesso</h2>
-                <div class="form-group"><label for="createUserEmail">Email:</label><input type="email" id="createUserEmail"></div>
-                <div class="form-group"><label for="generatedPasswordDisplay">Senha Gerada:</label><input type="text" id="generatedPasswordDisplay" readonly></div>
-                <button class="btn-primary" id="btnCreateUser" style="width: 100%;">Gerar Senha e Criar Usuário</button>
-                <div id="createUserErrorMessage"></div>
-            </div>
-        </div>
-
-        <div id="screenListarLogins" class="screen">
-            <button id="btnListarLoginsVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
-            <div class="card">
-                <h2>Logins Cadastrados</h2>
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Email</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTableBody">
-                            <tr><td colspan="1" style="text-align: center; padding: 20px;">Carregando usuários...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div id="listarLoginsMessage" style="display:none; color: var(--color-text-dark); margin-top: 1rem;"></div>
-            </div>
-        </div>
-
         <div id="screenAlterarSenha" class="screen">
             <button id="btnAlterarSenhaVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
             <div class="card">
@@ -916,7 +875,10 @@
             <button id="btnRelatorioColaboradoresVoltar" class="btn-secondary" style="margin-bottom: 1.5rem;">&larr; Voltar ao Painel</button>
             <div class="card">
                 <h2>Relatório de Colaboradores</h2>
-                <button id="btnGerarRelatorioColaboradoresPdf" class="btn-success" style="margin-bottom: var(--spacing-unit);">Gerar PDF</button>
+                <div style="display: flex; gap: var(--spacing-unit); margin-bottom: var(--spacing-unit);">
+                    <button id="btnGerarRelatorioColaboradoresPdf" class="btn-success" style="flex: 1;">Gerar PDF</button>
+                    <button id="btnGerarRelatorioColaboradoresXlsx" class="btn-success" style="flex: 1;">Gerar XLSX</button>
+                </div>
                 <div class="table-responsive">
                     <table class="data-table">
                         <thead>
@@ -966,8 +928,8 @@
             const screenListarColaboradores = document.getElementById('screenListarColaboradores');
             const screenLancarDiarias = document.getElementById('screenLancarDiarias');
             const screenRelatorios = document.getElementById('screenRelatorios');
-            const screenCriarLogin = document.getElementById('screenCriarLogin');
-            const screenListarLogins = document.getElementById('screenListarLogins');
+            const screenCriarLogin = document.getElementById('screenCriarLogin'); // MANTIDO: Embora a tela de listar logins seja removida, criar login é uma funcionalidade separada
+            // const screenListarLogins = document.getElementById('screenListarLogins'); // REMOVIDO
             const screenAlterarSenha = document.getElementById('screenAlterarSenha');
             const screenGerenciarDiarias = document.getElementById('screenGerenciarDiarias');
             const screenHistorico = document.getElementById('screenHistorico');
@@ -988,7 +950,7 @@
             const btnGoToListarColaboradores = document.getElementById('btnGoToListarColaboradores');
             const btnGoToRelatorios = document.getElementById('btnGoToRelatorios');
             const btnGoToCriarLogin = document.getElementById('btnGoToCriarLogin');
-            const btnGoToListarLogins = document.getElementById('btnGoToListarLogins');
+            // const btnGoToListarLogins = document.getElementById('btnGoToListarLogins'); // REMOVIDO
             const btnGoToAlterarSenha = document.getElementById('btnGoToAlterarSenha');
             const btnGoToGerenciarDiarias = document.getElementById('btnGoToGerenciarDiarias');
             const btnGoToHistorico = document.getElementById('btnGoToHistorico');
@@ -1039,17 +1001,17 @@
             const resumoGastosDiv = document.getElementById('resumoGastos');
             const resumoGastosBody = document.getElementById('resumoGastosBody');
             
-            // Criar Login
+            // Criar Login (tela, mas a funcionalidade de listar logins foi removida)
             const createUserEmailInput = document.getElementById('createUserEmail');
             const generatedPasswordDisplay = document.getElementById('generatedPasswordDisplay');
             const btnCreateUser = document.getElementById('btnCreateUser');
             const createUserErrorMessage = document.getElementById('createUserErrorMessage');
             const btnCriarLoginVoltar = document.getElementById('btnCriarLoginVoltar');
 
-            // Listar Logins
-            const usersTableBody = document.getElementById('usersTableBody');
-            const listarLoginsMessage = document.getElementById('listarLoginsMessage');
-            const btnListarLoginsVoltar = document.getElementById('btnListarLoginsVoltar');
+            // Listar Logins (REMOVIDOS os seletores, pois a tela e funcionalidade foram removidas)
+            // const usersTableBody = document.getElementById('usersTableBody');
+            // const listarLoginsMessage = document.getElementById('listarLoginsMessage');
+            // const btnListarLoginsVoltar = document.getElementById('btnListarLoginsVoltar');
 
             // Alterar Senha
             const currentPasswordInput = document.getElementById('currentPassword'); 
@@ -1091,6 +1053,7 @@
             const relatorioColaboradoresTableBody = document.getElementById('relatorioColaboradoresTableBody');
             const btnRelatorioColaboradoresVoltar = document.getElementById('btnRelatorioColaboradoresVoltar');
             const btnGerarRelatorioColaboradoresPdf = document.getElementById('btnGerarRelatorioColaboradoresPdf');
+            const btnGerarRelatorioColaboradoresXlsx = document.getElementById('btnGerarRelatorioColaboradoresXlsx'); // NOVO
 
             // --- FUNÇÕES DE NAVEGAÇÃO E UI ---
             function showScreen(screenId) {
@@ -1135,9 +1098,8 @@
                 userEmailDisplay.textContent = user.email;
                 const isAdmin = user.id === ADMIN_USER_ID;
 
-                // Esconde/mostra botões de admin
-                btnGoToCriarLogin.style.display = isAdmin ? 'flex' : 'none';
-                btnGoToListarLogins.style.display = isAdmin ? 'flex' : 'none';
+                // Esconde/mostra botões de admin (Botões de Login/Acesso já foram removidos do HTML)
+                btnGoToCriarLogin.style.display = isAdmin ? 'flex' : 'none'; // Este botão ainda existe no HTML, mas agora oculta se não for admin
                 btnGoToGerenciarRegras.style.display = isAdmin ? 'flex' : 'none';
 
                 // Carrega dados essenciais
@@ -1615,38 +1577,15 @@
                 generatedPasswordDisplay.value = password;
                 createUserErrorMessage.style.display = 'none';
 
-                const { data, error } = await _supabase.auth.signUp({ email, password });
-
-                if (error) {
-                    createUserErrorMessage.textContent = `Erro: ${error.message}`;
-                    createUserErrorMessage.style.display = 'block';
-                } else {
-                    alert(`Usuário ${email} criado com sucesso! A senha é: ${password}. Guarde esta senha em um local seguro.`);
-                    createUserEmailInput.value = '';
-                    generatedPasswordDisplay.value = '';
-                }
+                // A criação de usuário admin via frontend com a anon key não é segura nem permitida diretamente.
+                // Esta funcionalidade DEVE ser feita via um ambiente de backend (ex: Supabase Edge Function).
+                alert("A criação de usuários só pode ser feita por um administrador através de um ambiente seguro de backend (ex: Supabase Edge Function).");
+                createUserErrorMessage.textContent = "Operação não permitida diretamente do navegador por segurança.";
+                createUserErrorMessage.style.display = 'block';
+                console.error("Tentativa de criar usuário admin diretamente do frontend - BLOQUEADO POR SEGURANÇA.");
             }
 
-            async function showListarLoginsScreen() {
-                usersTableBody.innerHTML = '<tr><td style="text-align: center; padding: 20px;">Carregando usuários...</td></tr>';
-                listarLoginsMessage.style.display = 'none';
-                showScreen('listarLogins');
-
-                const { data: { users }, error } = await _supabase.auth.admin.listUsers();
-                if (error) {
-                    // Mensagem de erro mais clara sobre a permissão
-                    listarLoginsMessage.textContent = `Erro ao listar usuários: ${error.message}. Esta operação requer permissões de administrador (Service Role Key) e deve ser executada em um ambiente de backend, como uma Supabase Edge Function, não diretamente do navegador por questões de segurança.`;
-                    listarLoginsMessage.style.display = 'block';
-                    usersTableBody.innerHTML = '';
-                    console.error("Erro ao listar usuários (requer Service Role Key):", error);
-                    return;
-                }
-                usersTableBody.innerHTML = '';
-                users.forEach(user => {
-                    const row = usersTableBody.insertRow();
-                    row.innerHTML = `<td>${user.email}</td>`;
-                });
-            }
+            // REMOVIDA a função showListarLoginsScreen, conforme solicitado
 
             async function handleChangePassword() {
                 const newPassword = newPasswordInput.value;
@@ -2110,7 +2049,7 @@
                 e.target.value = formatTelefone(e.target.value);
             });
 
-            // --- NOVO: Relatório de Colaboradores ---
+            // --- Relatório de Colaboradores ---
             async function showRelatorioColaboradoresScreen() {
                 relatorioColaboradoresTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;">Carregando colaboradores...</td></tr>';
                 showScreen('relatorioColaboradores');
@@ -2230,6 +2169,41 @@
                 alert('Relatório de Colaboradores PDF gerado com sucesso!');
             }
 
+            // NOVA FUNÇÃO: Gerar Relatório de Colaboradores em XLSX
+            async function gerarRelatorioColaboradoresXlsx() {
+                const { data: colaboradoresData, error } = await _supabase.from('colaboradores').select('*').order('nome_completo');
+                if (error) {
+                    console.error("Erro ao buscar colaboradores para XLSX:", error);
+                    alert("Erro ao gerar XLSX de colaboradores.");
+                    return;
+                }
+
+                if (colaboradoresData.length === 0) {
+                    alert('Nenhum colaborador para gerar relatório XLSX.');
+                    return;
+                }
+
+                const ws_data = [
+                    ['Nome Completo', 'Função', 'Setor', 'Chave PIX', 'CPF', 'Telefone', 'Endereço', 'Data Nascimento', 'Nome da Mãe'],
+                    ...colaboradoresData.map(colab => [
+                        colab.nome_completo,
+                        colab.funcao,
+                        colab.setor,
+                        colab.chave_pix || '',
+                        formatCpf(colab.cpf) || '',
+                        formatTelefone(colab.telefone) || '',
+                        colab.endereco || '',
+                        colab.data_nascimento ? new Date(colab.data_nascimento + 'T00:00:00').toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : '',
+                        colab.nome_mae || ''
+                    ])
+                ];
+
+                const ws = XLSX.utils.aoa_to_sheet(ws_data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Colaboradores");
+                XLSX.writeFile(wb, `Relatorio_Colaboradores_${new Date().toLocaleDateString('pt-BR')}.xlsx`);
+                alert('Relatório de Colaboradores XLSX gerado com sucesso!');
+            }
 
             // --- INICIALIZAÇÃO E LISTENERS GERAIS ---
             async function initializeApp() {
@@ -2297,7 +2271,7 @@
                 });
                 if(btnGerarRelatorioXlsx) btnGerarRelatorioXlsx.addEventListener('click', gerarRelatorioXlsx);
 
-                // Criação de Login
+                // Criação de Login (botão no Dashboard)
                 if(btnGoToCriarLogin) btnGoToCriarLogin.addEventListener('click', () => {
                     createUserEmailInput.value = '';
                     generatedPasswordDisplay.value = ''; 
@@ -2310,10 +2284,6 @@
                     if (e.key === 'Enter') handleCreateUser(); 
                 });
                 
-                // Listar Logins
-                if(btnGoToListarLogins) btnGoToListarLogins.addEventListener('click', showListarLoginsScreen);
-                if(btnListarLoginsVoltar) btnListarLoginsVoltar.addEventListener('click', () => showScreen('dashboard'));
-
                 // Alterar Senha
                 if(btnGoToAlterarSenha) btnGoToAlterarSenha.addEventListener('click', () => {
                     currentPasswordInput.value = '';
@@ -2353,10 +2323,11 @@
                 if(btnGerenciarRegrasVoltar) btnGerenciarRegrasVoltar.addEventListener('click', () => showScreen('dashboard'));
                 if(btnAdicionarNovaRegra) btnAdicionarNovaRegra.addEventListener('click', handleAdicionarNovaRegra);
 
-                // NOVO: Relatório de Colaboradores
+                // Relatório de Colaboradores
                 if(btnGoToRelatorioColaboradores) btnGoToRelatorioColaboradores.addEventListener('click', showRelatorioColaboradoresScreen);
                 if(btnRelatorioColaboradoresVoltar) btnRelatorioColaboradoresVoltar.addEventListener('click', () => showScreen('dashboard'));
                 if(btnGerarRelatorioColaboradoresPdf) btnGerarRelatorioColaboradoresPdf.addEventListener('click', gerarRelatorioColaboradoresPdf);
+                if(btnGerarRelatorioColaboradoresXlsx) btnGerarRelatorioColaboradoresXlsx.addEventListener('click', gerarRelatorioColaboradoresXlsx); // NOVO LISTENER
                 
                 // Inicialização da sessão
                 const { data: { session } } = await _supabase.auth.getSession();
